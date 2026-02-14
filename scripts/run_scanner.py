@@ -5,6 +5,9 @@ Usage:
     python scripts/run_scanner.py                # defaults: SPY, 5min, 5-day lookback
     python scripts/run_scanner.py --ticker AVGO --timeframe 15min
     python scripts/run_scanner.py --dashboard    # launch Streamlit UI
+    python scripts/run_scanner.py --dry-run      # analyse without sending alerts
+    python scripts/run_scanner.py --no-cache     # skip data cache (always fetch live)
+    python scripts/run_scanner.py --multi-tf     # confirm with higher timeframe
 """
 
 from __future__ import annotations
@@ -29,7 +32,7 @@ from src.fib_mapper import FibMapper
 from src.wave_counter import WaveCounter
 from src.divergence import DivergenceDetector
 from src.alert_engine import AlertEngine
-from src.models import WaveDirection, WaveLabel
+from src.models import WaveDirection, WaveLabel, ScanResult
 
 load_dotenv()
 
@@ -38,6 +41,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("scanner")
+
+
+# Width of the summary box
+_BOX_W = 52
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -58,6 +65,69 @@ def load_config() -> dict:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# Summary formatting
+# ──────────────────────────────────────────────────────────────────────────
+
+def _box_line(text: str) -> str:
+    """Pad *text* to fit inside the summary box."""
+    return f"\u2551 {text:<{_BOX_W - 4}} \u2551"
+
+
+def print_summary(
+    ticker: str,
+    last_close: float,
+    timeframe: str,
+    bar_count: int,
+    wave_count,
+    projection,
+    divergences: list,
+    alerts: list,
+) -> None:
+    """Print a formatted summary box to stdout."""
+    top = "\u2554" + "\u2550" * (_BOX_W - 2) + "\u2557"
+    mid = "\u2560" + "\u2550" * (_BOX_W - 2) + "\u2563"
+    bot = "\u255a" + "\u2550" * (_BOX_W - 2) + "\u255d"
+
+    lines = [
+        top,
+        _box_line(f"{'SPY WAVE SCANNER \u2014 RESULTS':^{_BOX_W - 4}}"),
+        mid,
+        _box_line(f"Ticker:     {ticker}"),
+        _box_line(f"Price:      ${last_close:.2f}"),
+        _box_line(f"Timeframe:  {timeframe} ({bar_count} bars)"),
+        _box_line(""),
+    ]
+
+    if wave_count:
+        direction = wave_count.direction.value.upper()
+        conf = f"{wave_count.confidence * 100:.0f}%"
+        label = wave_count.current_wave_label.value if wave_count.current_wave_label else "?"
+        lines.append(_box_line(f"Wave Count: {wave_count.pattern_type.title()} {direction} ({conf} confidence)"))
+        lines.append(_box_line(f"Current:    Wave {label} completing"))
+        if projection:
+            lines.append(_box_line(f"Target:     ${projection.primary_target:.2f} ({projection.next_wave})"))
+        if wave_count.invalidation_price:
+            lines.append(_box_line(f"Invalidation: ${wave_count.invalidation_price:.2f}"))
+    else:
+        lines.append(_box_line("Wave Count: No clear pattern detected"))
+
+    lines.append(_box_line(""))
+
+    div_count = len(divergences)
+    if div_count:
+        div_types = set(d.type.value for d in divergences)
+        div_str = ", ".join(f"{t} {divergences[0].indicator}" for t in div_types)
+        lines.append(_box_line(f"Divergences: {div_count} ({div_str})"))
+    else:
+        lines.append(_box_line("Divergences: None"))
+
+    lines.append(_box_line(f"Alerts:     {len(alerts)} triggered"))
+    lines.append(bot)
+
+    print("\n".join(lines))
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # Pipeline
 # ──────────────────────────────────────────────────────────────────────────
 
@@ -67,6 +137,9 @@ def run_pipeline(
     lookback_days: int = 5,
     sensitivity: int = 5,
     min_swing_pct: float = 0.3,
+    dry_run: bool = False,
+    use_cache: bool = True,
+    multi_tf: bool = False,
 ) -> None:
     """Execute the full scan pipeline and dispatch alerts."""
 
@@ -78,7 +151,7 @@ def run_pipeline(
     # 1. Fetch data
     logger.info("=== SPY Wave Scanner — %s %s ===", ticker, timeframe)
     feed = DataFeed(api_key=api_key, ticker=ticker)
-    df = feed.get_bars(timeframe=timeframe, lookback_days=lookback_days)
+    df = feed.get_bars(timeframe=timeframe, lookback_days=lookback_days, use_cache=use_cache)
     if df.empty:
         logger.warning("No data returned — market may be closed")
         return
@@ -113,6 +186,10 @@ def run_pipeline(
             logger.warning("Violations: %s", wave_count.violations)
     else:
         logger.info("No clear wave count detected")
+
+    # 3b. Multi-timeframe confirmation
+    if multi_tf and wave_count:
+        _multi_timeframe_confirm(feed, wave_count, timeframe, lookback_days, sensitivity, min_swing_pct, use_cache)
 
     # 4. Fibonacci levels
     fm = FibMapper()
@@ -165,11 +242,83 @@ def run_pipeline(
         logger.info("Alerts generated: %d", len(alerts))
         for alert in alerts:
             logger.info("  [%s] %s", alert.priority.value.upper(), alert.message)
-            alert_engine.dispatch_alert(alert)
+            if not dry_run:
+                alert_engine.dispatch_alert(alert)
+            else:
+                logger.info("  (dry-run — alert not dispatched)")
     else:
         logger.info("No alerts triggered at current price $%.2f", last_close)
 
+    # 8. Print summary box
+    print_summary(
+        ticker=ticker,
+        last_close=last_close,
+        timeframe=timeframe,
+        bar_count=len(df),
+        wave_count=wave_count,
+        projection=projection,
+        divergences=divergences,
+        alerts=alerts,
+    )
+
     logger.info("=== Scan complete ===")
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Multi-timeframe confirmation
+# ──────────────────────────────────────────────────────────────────────────
+
+# Map primary timeframe to confirmation timeframe
+_CONFIRM_TF = {
+    "1min": "5min",
+    "5min": "15min",
+    "15min": "1h",
+    "1h": "1day",
+    "1day": "1day",
+}
+
+
+def _multi_timeframe_confirm(
+    feed: DataFeed,
+    wave_count,
+    primary_tf: str,
+    lookback_days: int,
+    sensitivity: int,
+    min_swing_pct: float,
+    use_cache: bool,
+) -> None:
+    """Run a confirmation scan on a higher timeframe and boost confidence if directions agree."""
+    confirm_tf = _CONFIRM_TF.get(primary_tf, primary_tf)
+    if confirm_tf == primary_tf:
+        return
+
+    logger.info("Multi-TF: confirming with %s timeframe", confirm_tf)
+    df2 = feed.get_bars(timeframe=confirm_tf, lookback_days=lookback_days, use_cache=use_cache)
+    if df2.empty:
+        logger.info("Multi-TF: no data for %s — skipping", confirm_tf)
+        return
+    df2 = feed.compute_indicators(df2)
+
+    detector = PivotDetector(sensitivity=sensitivity)
+    pivots2 = detector.find_pivots(df2)
+    pivots2 = detector.filter_significant_pivots(pivots2, min_swing_pct=min_swing_pct)
+
+    wc2 = WaveCounter()
+    confirm_count = wc2.count_impulse_best(pivots2, direction=wave_count.direction)
+    if confirm_count is None:
+        confirm_count = wc2.count_corrective(pivots2, direction=wave_count.direction)
+
+    if confirm_count and confirm_count.direction == wave_count.direction:
+        boost = 0.10
+        old_conf = wave_count.confidence
+        wave_count.confidence = min(wave_count.confidence + boost, 1.0)
+        logger.info(
+            "Multi-TF: %s confirms %s direction — confidence %.0f%% -> %.0f%%",
+            confirm_tf, wave_count.direction.value,
+            old_conf * 100, wave_count.confidence * 100,
+        )
+    else:
+        logger.info("Multi-TF: %s does not confirm — no boost", confirm_tf)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -201,6 +350,21 @@ def main() -> None:
         action="store_true",
         help="Launch the Streamlit dashboard instead of CLI scan",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run analysis without sending alerts",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Skip data cache — always fetch live from Polygon",
+    )
+    parser.add_argument(
+        "--multi-tf",
+        action="store_true",
+        help="Confirm wave count with higher timeframe",
+    )
     args = parser.parse_args()
 
     if args.dashboard:
@@ -216,6 +380,9 @@ def main() -> None:
             lookback_days=args.lookback,
             sensitivity=args.sensitivity,
             min_swing_pct=args.min_swing,
+            dry_run=args.dry_run,
+            use_cache=not args.no_cache,
+            multi_tf=args.multi_tf,
         )
 
 

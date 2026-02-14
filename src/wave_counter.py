@@ -198,14 +198,8 @@ class WaveCounter:
         # Rule 3: Wave 4 cannot overlap Wave 1 territory
         if wave_count.direction == WaveDirection.DOWN:
             # Down impulse: W1 goes high→low, W4 goes low→high
-            # W4 end (high) must not go above W1 end (low)
-            if w4.end.price < w1.end.price:
-                # W4 high is below W1 low → OK (inverted because down)
-                pass
-            # Actually for a down impulse:
-            # W1: start(high) -> end(low), so W1 low = w1.end.price
-            # W4: start(low) -> end(high), so W4 high = w4.end.price
-            # Rule: W4 high must stay below W1 low
+            # W1 low = w1.end.price, W4 high = w4.end.price
+            # W4 high must stay below W1 low
             if w4.end.price > w1.end.price:
                 violations.append(
                     f"Rule 3 violated: Wave 4 end ({w4.end.price:.2f}) "

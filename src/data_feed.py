@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -11,6 +13,9 @@ import pandas as pd
 from polygon import RESTClient
 
 logger = logging.getLogger(__name__)
+
+# Default cache directory
+_DEFAULT_CACHE_DIR = Path.home() / ".cache" / "spy-wave-scanner"
 
 
 class DataFeed:
@@ -25,9 +30,40 @@ class DataFeed:
         "1day": (1, "day"),
     }
 
-    def __init__(self, api_key: str, ticker: str = "SPY"):
+    def __init__(
+        self,
+        api_key: str,
+        ticker: str = "SPY",
+        cache_dir: Optional[str] = None,
+        rate_limit_rpm: int = 5,
+    ):
         self.client = RESTClient(api_key)
         self.ticker = ticker
+        self.cache_dir = Path(cache_dir) if cache_dir else _DEFAULT_CACHE_DIR
+        self._min_interval = 60.0 / max(rate_limit_rpm, 1)
+        self._last_call: float = 0.0
+
+    # ------------------------------------------------------------------
+    # Rate limiting
+    # ------------------------------------------------------------------
+
+    def _throttle(self) -> None:
+        """Sleep if needed to respect Polygon API rate limits."""
+        elapsed = time.time() - self._last_call
+        if elapsed < self._min_interval:
+            wait = self._min_interval - elapsed
+            logger.debug("Rate limit: sleeping %.1fs", wait)
+            time.sleep(wait)
+        self._last_call = time.time()
+
+    # ------------------------------------------------------------------
+    # Caching
+    # ------------------------------------------------------------------
+
+    def _cache_key(self, timeframe: str, lookback_days: int, end_date: datetime) -> Path:
+        """Build a cache file path for this query."""
+        date_str = end_date.strftime("%Y%m%d")
+        return self.cache_dir / f"{self.ticker}_{timeframe}_{lookback_days}d_{date_str}.parquet"
 
     # ------------------------------------------------------------------
     # Public API
@@ -38,6 +74,7 @@ class DataFeed:
         timeframe: str = "5min",
         lookback_days: int = 5,
         end_date: Optional[datetime] = None,
+        use_cache: bool = True,
     ) -> pd.DataFrame:
         """Fetch OHLCV bars from Polygon.io.
 
@@ -49,6 +86,8 @@ class DataFeed:
             Number of calendar days to look back.
         end_date : datetime, optional
             End of the query window.  Defaults to now.
+        use_cache : bool
+            If True, check for cached data before hitting the API.
 
         Returns
         -------
@@ -62,9 +101,19 @@ class DataFeed:
                 f"Choose from {list(self._TF_MAP)}"
             )
 
-        multiplier, timespan = self._TF_MAP[timeframe]
         end = end_date or datetime.now()
+
+        # Check cache first
+        if use_cache:
+            cache_file = self._cache_key(timeframe, lookback_days, end)
+            if cache_file.exists():
+                logger.info("Loading cached data from %s", cache_file)
+                return pd.read_parquet(cache_file)
+
+        multiplier, timespan = self._TF_MAP[timeframe]
         start = end - timedelta(days=lookback_days)
+
+        self._throttle()
 
         aggs = self.client.get_aggs(
             ticker=self.ticker,
@@ -100,10 +149,19 @@ class DataFeed:
             "Fetched %d bars for %s (%s, %d-day lookback)",
             len(df), self.ticker, timeframe, lookback_days,
         )
+
+        # Save to cache
+        if use_cache:
+            cache_file = self._cache_key(timeframe, lookback_days, end)
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(cache_file)
+            logger.info("Cached data to %s", cache_file)
+
         return df
 
     def get_realtime_quote(self) -> dict:
         """Return current bid / ask / last for proximity alert checks."""
+        self._throttle()
         snapshot = self.client.get_snapshot_ticker(
             "stocks", self.ticker
         )

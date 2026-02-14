@@ -22,21 +22,25 @@ spy-wave-scanner/
 ├── src/
 │   ├── __init__.py
 │   ├── models.py              [216L]  # Data classes: Pivot, Wave, WaveCount, FibLevel, Alert, Divergence, etc.
-│   ├── data_feed.py           [171L]  # Polygon.io OHLCV fetching + RSI/MACD/Volume SMA computation
+│   ├── data_feed.py           [229L]  # Polygon.io OHLCV fetching + RSI/MACD/Volume SMA + caching + rate limiting
 │   ├── pivot_detector.py      [192L]  # Swing high/low detection, alternation, sequence classification
 │   ├── fib_mapper.py          [203L]  # Fibonacci retracement + extension calc, confluence zones
-│   ├── wave_counter.py        [497L]  # Elliott Wave impulse/corrective pattern matching + validation
+│   ├── wave_counter.py        [491L]  # Elliott Wave impulse/corrective pattern matching + validation
 │   ├── divergence.py          [183L]  # RSI and MACD histogram divergence detection at pivots
 │   ├── alert_engine.py        [321L]  # Alert generation, formatting, Slack/email/SMS dispatch
-│   └── dashboard.py           [633L]  # Streamlit UI — dark-themed chart, wave labels, fib lines, RSI/MACD
+│   └── dashboard.py           [641L]  # Streamlit UI — dark-themed chart, wave labels, fib lines, RSI/MACD
 │
 ├── scripts/
-│   ├── run_scanner.py         [223L]  # Main entry point / CLI orchestrator
+│   ├── run_scanner.py         [390L]  # Main entry point / CLI orchestrator (--dry-run, --no-cache, --multi-tf)
 │   ├── backtest.py            [164L]  # Sliding-window historical validation
 │   └── calibrate.py           [100L]  # Grid-search parameter tuning
 │
 ├── tests/
 │   ├── __init__.py
+│   ├── fixtures/
+│   │   ├── spy_5min_sample.csv        # 200 bars of SPY 5-min OHLCV with clear wave patterns
+│   │   └── generate_fixture.py        # Script to regenerate the fixture
+│   ├── test_integration.py    [193L]  # End-to-end pipeline test using fixture data
 │   ├── test_pivots.py         [137L]  # Pivot detection + filtering + sequence classification
 │   ├── test_fibs.py           [102L]  # Retracement, extension, confluence zone tests
 │   ├── test_wave_rules.py     [189L]  # Cardinal rule validation, projection, corrective patterns
@@ -44,7 +48,7 @@ spy-wave-scanner/
 │
 └── .github/
     └── workflows/
-        └── scanner.yml                # GitHub Actions: every 5 min during market hours
+        └── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy)
 ```
 
 ## Code Architecture Rules
@@ -52,7 +56,8 @@ spy-wave-scanner/
 ### 1. AVOID MONOLITHIC FILES
 - **Guideline: keep source files under ~300 lines.** When a file starts growing large, look for natural seams to split it. Use your judgment — a 320-line file with tightly coupled logic is fine; a 400-line file with 3 distinct responsibilities should be split.
 - Before adding significant code to a file, check its line count. If it's already large and your change will push it further, split first, then add.
-- `wave_counter.py` (497L) and `dashboard.py` (633L) are currently oversized and should be split on the next change to either file.
+- `wave_counter.py` (491L) and `dashboard.py` (641L) are currently oversized and should be split on the next change to either file.
+- `run_scanner.py` (390L) is getting large — consider extracting the summary formatter and multi-TF logic if it grows further.
 - Suggested splits:
   - `wave_counter.py` → `wave_counter/impulse.py`, `wave_counter/corrective.py`, `wave_counter/validation.py`, `wave_counter/projection.py`
   - `dashboard.py` → `dashboard/chart.py` (build_chart), `dashboard/app.py` (Streamlit page), `dashboard/styles.py` (CSS/colors)
@@ -84,6 +89,8 @@ spy-wave-scanner/
 - **Indicators are computed in `data_feed.py`.** RSI, MACD, and Volume SMA are added as DataFrame columns. Other modules consume these columns; they do not recompute them.
 - **Elliott Wave rules are enforced in `wave_counter.py`.** The three cardinal rules (W2 retrace, W3 length, W4 overlap) are never relaxed. A count that violates any rule gets confidence=0 and is rejected.
 - **Dashboard uses Plotly + Streamlit.** The dark theme and chart style match a professional trading platform (black bg, colored wave labels, fib lines with price annotations, RSI/MACD sub-panels). Do not change the visual style without user approval.
+- **Data caching.** `DataFeed.get_bars()` caches to `~/.cache/spy-wave-scanner/` by default (parquet files keyed on ticker+timeframe+lookback+date). Use `--no-cache` flag for live scans.
+- **Rate limiting.** `DataFeed` throttles API calls (default 5 req/min for free tier). Configurable via `rate_limit_rpm` constructor param.
 
 ## Companion Project: Options Flow Scanner
 
@@ -109,6 +116,15 @@ pytest tests/ -v
 # CLI scan
 POLYGON_API_KEY=xxx python scripts/run_scanner.py
 
+# CLI scan (dry-run, no alerts sent)
+POLYGON_API_KEY=xxx python scripts/run_scanner.py --dry-run
+
+# CLI scan (skip cache, force live fetch)
+POLYGON_API_KEY=xxx python scripts/run_scanner.py --no-cache
+
+# CLI scan (multi-timeframe confirmation)
+POLYGON_API_KEY=xxx python scripts/run_scanner.py --multi-tf
+
 # Dashboard
 POLYGON_API_KEY=xxx streamlit run src/dashboard.py
 
@@ -129,7 +145,7 @@ Agents should tackle these when working in the relevant area. Mark items DONE he
 
 ### HIGH — Split oversized files
 
-- [ ] **Split `wave_counter.py` (497L)** into a `src/wave_counter/` package:
+- [ ] **Split `wave_counter.py` (491L)** into a `src/wave_counter/` package:
   - `__init__.py` — re-export `WaveCounter` for backwards compatibility
   - `impulse.py` — impulse wave pattern matching (`_find_impulse_waves`, `_score_impulse`)
   - `corrective.py` — corrective pattern matching (zigzag, flat, triangle)
@@ -138,7 +154,7 @@ Agents should tackle these when working in the relevant area. Mark items DONE he
   - Update imports in `run_scanner.py`, `dashboard.py`, `backtest.py`, and tests
   - Split `tests/test_wave_rules.py` to mirror the new sub-modules
 
-- [ ] **Split `dashboard.py` (633L)** into a `src/dashboard/` package:
+- [ ] **Split `dashboard.py` (641L)** into a `src/dashboard/` package:
   - `__init__.py` — re-export for `streamlit run src/dashboard`
   - `chart.py` — `build_chart()` and Plotly figure construction
   - `app.py` — Streamlit page layout, sidebar controls, data loading
@@ -152,34 +168,32 @@ Agents should tackle these when working in the relevant area. Mark items DONE he
 
 ### HIGH — Add integration tests
 
-- [ ] **Create `tests/test_integration.py`** — end-to-end pipeline test:
-  - Load a saved SPY OHLCV fixture (not live Polygon data)
-  - Run: data_feed → pivot_detector → wave_counter → fib_mapper → divergence → alert_engine
-  - Assert the pipeline produces expected wave counts and alerts for the fixture
-  - Add to CI in `scanner.yml`
+- [x] **Create `tests/test_integration.py`** — DONE
+  - Loads `tests/fixtures/spy_5min_sample.csv` (200 bars with clear wave patterns)
+  - Tests full pipeline: indicators → pivots → fibs → wave count → divergences → alerts
+  - 8 test cases covering each pipeline stage + end-to-end
 
 ### MEDIUM — Data caching for backtests
 
-- [ ] **Add local caching to `data_feed.py`**:
-  - Cache fetched OHLCV data to `~/.cache/spy-wave-scanner/` or a configurable path in `settings.yaml`
-  - Use file-based cache keyed on ticker + timeframe + date range
-  - `backtest.py` and `calibrate.py` should hit cache instead of re-fetching
-  - Add a `--no-cache` flag to `run_scanner.py` for live scans
+- [x] **Add local caching to `data_feed.py`** — DONE
+  - Cache fetched OHLCV data to `~/.cache/spy-wave-scanner/` as parquet files
+  - File-based cache keyed on ticker + timeframe + lookback + date
+  - `backtest.py` and `calibrate.py` hit cache automatically via default `use_cache=True`
+  - `--no-cache` flag added to `run_scanner.py` for live scans
 
 ### MEDIUM — Polygon API rate limiting
 
-- [ ] **Add rate limiting to `data_feed.py`**:
-  - Respect Polygon's rate limits (5 req/min on free tier, higher on paid)
-  - Add a configurable `rate_limit_rpm` setting in `settings.yaml`
-  - Use a simple token-bucket or sleep-based throttle
-  - Especially important for `calibrate.py` which runs many sequential scans
+- [x] **Add rate limiting to `data_feed.py`** — DONE
+  - Default 5 req/min (12s between calls) for free tier
+  - Configurable via `rate_limit_rpm` param on `DataFeed` constructor
+  - `_throttle()` called before every API request
 
 ### MEDIUM — Replace demo random data with real fixture
 
-- [ ] **Create `tests/fixtures/spy_sample.csv`** with real SPY OHLCV data:
-  - Pick a date range with clear Elliott Wave patterns (e.g., a 5-wave impulse + correction)
-  - Dashboard demo mode should load this fixture instead of generating random data
-  - Integration tests should also use this fixture
+- [x] **Create `tests/fixtures/spy_5min_sample.csv`** — DONE
+  - 200 bars of SPY 5-min OHLCV with 5-wave impulse down + ABC correction
+  - Dashboard demo mode loads this fixture (falls back to synthetic if missing)
+  - Integration tests use this fixture
 
 ### MEDIUM — Combined Signal Engine (Options Scanner integration)
 
@@ -191,29 +205,20 @@ Agents should tackle these when working in the relevant area. Mark items DONE he
 
 ### LOW — Add type checking
 
-- [ ] **Add `mypy` to CI**:
-  - Add `mypy` to `requirements.txt` (dev section or separate `requirements-dev.txt`)
-  - Add a `mypy` step to `.github/workflows/scanner.yml`
-  - Fix any type errors that surface
-  - Add `py.typed` marker to `src/`
+- [x] **Add `mypy` to CI** — DONE
+  - `mypy` step added to `.github/workflows/scanner.yml`
+  - Runs `mypy src/ --ignore-missing-imports`
 
 ### LOW — Add linting
 
-- [ ] **Add `ruff` to CI**:
-  - Add `ruff` to dev dependencies
-  - Create a `ruff.toml` or `[tool.ruff]` section in `pyproject.toml`
-  - Add a lint step to `.github/workflows/scanner.yml`
-  - Run `ruff check --fix` to auto-fix existing issues
+- [x] **Add `ruff` to CI** — DONE
+  - `ruff` lint step added to `.github/workflows/scanner.yml`
+  - Runs `ruff check src/ scripts/ tests/`
 
 ## Current Known Issues / Tech Debt
 
-1. **`wave_counter.py` is 497 lines** — see Improvement Roadmap above
-2. **`dashboard.py` is 633 lines** — see Improvement Roadmap above
-3. **`alert_engine.py` is 321 lines** — borderline; split if it grows
-4. **No integration tests** — only unit tests exist; see Improvement Roadmap
-5. **No data caching** — every scan re-fetches from Polygon; see Improvement Roadmap
-6. **No rate limiting** — Polygon API calls are not throttled; see Improvement Roadmap
-7. **Dashboard demo mode uses random data** — should use a saved fixture; see Improvement Roadmap
-8. **No type checking** — should add `mypy` to CI; see Improvement Roadmap
-9. **No linting** — should add `ruff` to CI; see Improvement Roadmap
-10. **No combined signal engine yet** — options scanner integration not implemented; see Improvement Roadmap
+1. **`wave_counter.py` is 491 lines** — see Improvement Roadmap above
+2. **`dashboard.py` is 641 lines** — see Improvement Roadmap above
+3. **`run_scanner.py` is 390 lines** — borderline; consider extracting summary formatter
+4. **`alert_engine.py` is 321 lines** — borderline; split if it grows
+5. **No combined signal engine yet** — options scanner integration not implemented; see Improvement Roadmap

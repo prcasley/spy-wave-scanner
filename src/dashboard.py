@@ -604,25 +604,33 @@ def _run_scan_pipeline(
 
 
 def _show_demo_chart(ticker: str = "SPY") -> None:
-    """Render a demo chart with synthetic data so the UI isn't empty."""
-    np.random.seed(42)
-    n = 200
-    base = 690.0
-    noise = np.random.randn(n).cumsum() * 0.3
-    close = base + noise
-    high = close + np.abs(np.random.randn(n)) * 0.5
-    low = close - np.abs(np.random.randn(n)) * 0.5
-    open_ = close + np.random.randn(n) * 0.2
+    """Render a demo chart with saved SPY fixture data (or synthetic fallback)."""
+    from pathlib import Path
 
-    idx = pd.date_range("2025-01-10 09:30", periods=n, freq="5min")
-    df = pd.DataFrame(
-        {"open": open_, "high": high, "low": low, "close": close, "volume": np.random.randint(1000, 50000, n)},
-        index=idx,
-    )
+    fixture_path = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "spy_5min_sample.csv"
+
+    if fixture_path.exists():
+        df = pd.read_csv(fixture_path, parse_dates=["timestamp"])
+        df.set_index("timestamp", inplace=True)
+    else:
+        # Fallback to synthetic data if fixture is missing
+        np.random.seed(42)
+        n = 200
+        base = 690.0
+        noise = np.random.randn(n).cumsum() * 0.3
+        close = base + noise
+        high = close + np.abs(np.random.randn(n)) * 0.5
+        low = close - np.abs(np.random.randn(n)) * 0.5
+        open_ = close + np.random.randn(n) * 0.2
+        idx = pd.date_range("2025-01-10 09:30", periods=n, freq="5min")
+        df = pd.DataFrame(
+            {"open": open_, "high": high, "low": low, "close": close, "volume": np.random.randint(1000, 50000, n)},
+            index=idx,
+        )
 
     fig = build_chart(df, ticker=ticker)
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Demo data — connect Polygon.io API key and click Scan Now for live results.")
+    st.caption("Demo data (saved SPY fixture) — connect Polygon.io API key and click Scan Now for live results.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
