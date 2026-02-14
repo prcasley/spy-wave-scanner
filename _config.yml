@@ -1,0 +1,3 @@
+theme: jekyll-theme-hacker
+title: SPY Elliott Wave Scanner
+description: Automated Elliott Wave detection and alert system for SPY with Fibonacci mapping, divergence detection, and real-time alerts via GitHub Actions
