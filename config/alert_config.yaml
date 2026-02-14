@@ -1,0 +1,36 @@
+# Alert delivery configuration
+# All sensitive values (webhooks, API keys) should be set via environment variables.
+
+slack:
+  enabled: true
+  # Set SLACK_WEBHOOK environment variable
+  webhook_env_var: "SLACK_WEBHOOK"
+  channel: "#spy-alerts"
+
+email:
+  enabled: false
+  # Set ALERT_EMAIL and SMTP_PASSWORD environment variables
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  from_env_var: "ALERT_EMAIL"
+  to_env_var: "ALERT_EMAIL"
+  password_env_var: "SMTP_PASSWORD"
+
+sms:
+  enabled: false
+  # Set TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, TWILIO_TO environment variables
+  sid_env_var: "TWILIO_SID"
+  token_env_var: "TWILIO_TOKEN"
+  from_env_var: "TWILIO_FROM"
+  to_env_var: "TWILIO_TO"
+
+# Alert priority thresholds
+priorities:
+  high:
+    - "wave_5_completing_with_divergence"
+    - "invalidation_breached"
+  medium:
+    - "fib_confluence_zone"
+    - "wave_4_approaching_resistance"
+  low:
+    - "wave_count_unclear"

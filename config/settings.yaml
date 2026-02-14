@@ -1,0 +1,26 @@
+ticker: SPY
+
+timeframes:
+  primary: "5min"         # Main scanning timeframe
+  confirmation: "15min"   # Higher timeframe confirmation
+  daily: "1day"           # For larger degree wave context
+
+pivot_detection:
+  sensitivity: 5          # Bars on each side to confirm pivot
+  min_swing_pct: 0.3      # Minimum swing size (% of price)
+
+fibonacci:
+  retracement_levels: [0.236, 0.382, 0.500, 0.618, 0.786, 1.000]
+  extension_levels: [1.000, 1.272, 1.382, 1.618, 2.000, 2.618]
+  confluence_tolerance: 0.50  # $ distance for confluence zones
+
+alerts:
+  proximity_threshold_pct: 0.15   # Alert when within 0.15% of level
+  invalidation_threshold_pct: 0.20
+  cooldown_minutes: 15            # Don't repeat same alert within 15 min
+
+indicators:
+  rsi_periods: [7, 14]
+  macd_fast: 5
+  macd_slow: 13
+  macd_signal: 8
