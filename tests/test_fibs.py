@@ -1,6 +1,5 @@
 """Tests for the FibMapper module."""
 
-import pytest
 
 from src.fib_mapper import FibMapper
 from src.models import FibLevel

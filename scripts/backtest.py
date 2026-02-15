@@ -11,7 +11,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -19,12 +19,10 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.data_feed import DataFeed
-from src.pivot_detector import PivotDetector
-from src.fib_mapper import FibMapper
-from src.wave_counter import WaveCounter
-from src.divergence import DivergenceDetector
-from src.models import WaveDirection, WaveLabel
+from src.data_feed import DataFeed  # noqa: E402
+from src.pivot_detector import PivotDetector  # noqa: E402
+from src.wave_counter import WaveCounter  # noqa: E402
+from src.models import WaveDirection  # noqa: E402
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
@@ -52,11 +50,8 @@ def backtest(
     feed = DataFeed(api_key=api_key, ticker=ticker)
     detector = PivotDetector(sensitivity=sensitivity)
     wc_engine = WaveCounter()
-    fm = FibMapper()
-    div_det = DivergenceDetector()
 
     end = datetime.now()
-    start = end - timedelta(days=total_days)
 
     logger.info("Fetching %d days of %s data for %s", total_days, timeframe, ticker)
     df_full = feed.get_bars(timeframe=timeframe, lookback_days=total_days, end_date=end)

@@ -19,6 +19,11 @@ spy-wave-scanner/
 │   ├── settings.yaml                  # Timeframes, pivot sensitivity, fib levels, indicator params
 │   └── alert_config.yaml             # Slack webhooks, email, SMS delivery config
 │
+├── docs/
+│   ├── index.html             [477L]  # GitHub Pages dashboard — TradingView Lightweight Charts, dark theme
+│   └── data/
+│       └── latest_scan.json           # Scan results JSON consumed by dashboard (auto-committed by CI)
+│
 ├── src/
 │   ├── __init__.py
 │   ├── models.py              [216L]  # Data classes: Pivot, Wave, WaveCount, FibLevel, Alert, Divergence, etc.
@@ -27,11 +32,12 @@ spy-wave-scanner/
 │   ├── fib_mapper.py          [203L]  # Fibonacci retracement + extension calc, confluence zones
 │   ├── wave_counter.py        [491L]  # Elliott Wave impulse/corrective pattern matching + validation
 │   ├── divergence.py          [183L]  # RSI and MACD histogram divergence detection at pivots
-│   ├── alert_engine.py        [321L]  # Alert generation, formatting, Slack/email/SMS dispatch
-│   └── dashboard.py           [641L]  # Streamlit UI — dark-themed chart, wave labels, fib lines, RSI/MACD
+│   ├── alert_engine.py        [318L]  # Alert generation, formatting, Slack/email/SMS dispatch
+│   ├── json_output.py         [143L]  # JSON serialization for scan results (used by CLI --output-json and CI)
+│   └── dashboard.py           [637L]  # Streamlit UI — dark-themed chart, wave labels, fib lines, RSI/MACD
 │
 ├── scripts/
-│   ├── run_scanner.py         [390L]  # Main entry point / CLI orchestrator (--dry-run, --no-cache, --multi-tf)
+│   ├── run_scanner.py         [459L]  # Main entry point / CLI (--dry-run, --no-cache, --multi-tf, --output-json)
 │   ├── backtest.py            [164L]  # Sliding-window historical validation
 │   └── calibrate.py           [100L]  # Grid-search parameter tuning
 │
@@ -48,7 +54,7 @@ spy-wave-scanner/
 │
 └── .github/
     └── workflows/
-        └── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy)
+        └── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy), auto-commit JSON
 ```
 
 ## Code Architecture Rules
@@ -57,7 +63,7 @@ spy-wave-scanner/
 - **Guideline: keep source files under ~300 lines.** When a file starts growing large, look for natural seams to split it. Use your judgment — a 320-line file with tightly coupled logic is fine; a 400-line file with 3 distinct responsibilities should be split.
 - Before adding significant code to a file, check its line count. If it's already large and your change will push it further, split first, then add.
 - `wave_counter.py` (491L) and `dashboard.py` (641L) are currently oversized and should be split on the next change to either file.
-- `run_scanner.py` (390L) is getting large — consider extracting the summary formatter and multi-TF logic if it grows further.
+- `run_scanner.py` (459L) is oversized — consider extracting the summary formatter, multi-TF logic, and JSON output into separate modules.
 - Suggested splits:
   - `wave_counter.py` → `wave_counter/impulse.py`, `wave_counter/corrective.py`, `wave_counter/validation.py`, `wave_counter/projection.py`
   - `dashboard.py` → `dashboard/chart.py` (build_chart), `dashboard/app.py` (Streamlit page), `dashboard/styles.py` (CSS/colors)
@@ -125,8 +131,14 @@ POLYGON_API_KEY=xxx python scripts/run_scanner.py --no-cache
 # CLI scan (multi-timeframe confirmation)
 POLYGON_API_KEY=xxx python scripts/run_scanner.py --multi-tf
 
-# Dashboard
+# CLI scan (output JSON for GitHub Pages dashboard)
+POLYGON_API_KEY=xxx python scripts/run_scanner.py --dry-run --output-json docs/data/latest_scan.json
+
+# Streamlit dashboard (local)
 POLYGON_API_KEY=xxx streamlit run src/dashboard.py
+
+# GitHub Pages dashboard: served from docs/ — reads docs/data/latest_scan.json
+# Enable GitHub Pages in repo settings → Source: Deploy from branch → /docs folder
 
 # Backtest
 POLYGON_API_KEY=xxx python scripts/backtest.py --ticker SPY --days 30
@@ -218,7 +230,7 @@ Agents should tackle these when working in the relevant area. Mark items DONE he
 ## Current Known Issues / Tech Debt
 
 1. **`wave_counter.py` is 491 lines** — see Improvement Roadmap above
-2. **`dashboard.py` is 641 lines** — see Improvement Roadmap above
-3. **`run_scanner.py` is 390 lines** — borderline; consider extracting summary formatter
-4. **`alert_engine.py` is 321 lines** — borderline; split if it grows
+2. **`dashboard.py` is 637 lines** — see Improvement Roadmap above
+3. **`run_scanner.py` is 459 lines** — oversized; extract summary formatter, multi-TF logic, JSON output
+4. **`alert_engine.py` is 318 lines** — borderline; split if it grows
 5. **No combined signal engine yet** — options scanner integration not implemented; see Improvement Roadmap

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import smtplib
 import os
@@ -10,7 +9,7 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from typing import Optional
 
-import requests
+import requests  # type: ignore[import-untyped]
 
 from src.models import (
     Alert,
@@ -18,10 +17,8 @@ from src.models import (
     AlertType,
     ConfluenceZone,
     Divergence,
-    DivergenceType,
     FibLevel,
     WaveCount,
-    WaveLabel,
     WaveProjection,
 )
 

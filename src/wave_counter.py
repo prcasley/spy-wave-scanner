@@ -6,9 +6,7 @@ import logging
 from typing import Optional
 
 from src.models import (
-    ConfluenceZone,
     CorrectivePattern,
-    FibLevel,
     Pivot,
     PivotType,
     Wave,
@@ -179,6 +177,8 @@ class WaveCounter:
         if not all([w1, w2, w3, w4, w5]):
             violations.append("Incomplete impulse — missing waves")
             return False, violations
+        assert w1 is not None and w2 is not None and w3 is not None
+        assert w4 is not None and w5 is not None
 
         # Rule 1: Wave 2 cannot retrace > 100 % of Wave 1
         if w2.length > w1.length:
@@ -379,6 +379,8 @@ class WaveCounter:
 
         if not all([w1, w2, w3, w4, w5]):
             return score
+        assert w1 is not None and w2 is not None and w3 is not None
+        assert w4 is not None and w5 is not None
 
         # +0.1 if W3 is the longest
         if w3.length >= w1.length and w3.length >= w5.length:

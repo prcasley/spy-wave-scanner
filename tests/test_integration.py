@@ -136,7 +136,6 @@ class TestFullPipeline:
         detector = PivotDetector(sensitivity=5)
         pivots = detector.find_pivots(df)
         pivots = detector.filter_significant_pivots(pivots, min_swing_pct=0.3)
-        seq = detector.classify_pivot_sequence(pivots)
 
         # Wave counting
         wc = WaveCounter()

@@ -13,7 +13,6 @@ Visual style modelled after a professional trading-platform dark chart:
 from __future__ import annotations
 
 import os
-from datetime import datetime
 from typing import Optional
 
 import numpy as np
@@ -23,12 +22,10 @@ from plotly.subplots import make_subplots
 import streamlit as st
 
 from src.models import (
-    Alert,
     ConfluenceZone,
     Divergence,
     DivergenceType,
     FibLevel,
-    Pivot,
     PivotType,
     WaveCount,
     WaveDirection,
@@ -465,7 +462,6 @@ def _run_scan_pipeline(
         pd_det = PivotDetector(sensitivity=sensitivity)
         pivots = pd_det.find_pivots(df)
         pivots = pd_det.filter_significant_pivots(pivots, min_swing_pct=min_swing_pct)
-        seq = pd_det.classify_pivot_sequence(pivots)
 
         wc = WaveCounter()
         wave_count = wc.count_impulse_best(pivots, direction=WaveDirection.DOWN)
@@ -566,7 +562,7 @@ def _run_scan_pipeline(
         with st.expander("Fibonacci Levels", expanded=False):
             fib_df = pd.DataFrame([
                 {"Level": lv.label, "Price": f"${lv.price:.2f}", "Source": lv.source}
-                for lv in sorted(fib_levels, key=lambda l: l.price, reverse=True)
+                for lv in sorted(fib_levels, key=lambda lv: lv.price, reverse=True)
             ])
             st.dataframe(fib_df, use_container_width=True, hide_index=True)
 

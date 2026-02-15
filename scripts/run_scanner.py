@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -26,13 +27,14 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.data_feed import DataFeed
-from src.pivot_detector import PivotDetector
-from src.fib_mapper import FibMapper
-from src.wave_counter import WaveCounter
-from src.divergence import DivergenceDetector
-from src.alert_engine import AlertEngine
-from src.models import WaveDirection, WaveLabel, ScanResult
+from src.data_feed import DataFeed  # noqa: E402
+from src.pivot_detector import PivotDetector  # noqa: E402
+from src.fib_mapper import FibMapper  # noqa: E402
+from src.wave_counter import WaveCounter  # noqa: E402
+from src.divergence import DivergenceDetector  # noqa: E402
+from src.alert_engine import AlertEngine  # noqa: E402
+from src.models import WaveDirection, WaveLabel  # noqa: E402
+from src.json_output import scan_result_to_json  # noqa: E402
 
 load_dotenv()
 
@@ -140,6 +142,7 @@ def run_pipeline(
     dry_run: bool = False,
     use_cache: bool = True,
     multi_tf: bool = False,
+    output_json: str | None = None,
 ) -> None:
     """Execute the full scan pipeline and dispatch alerts."""
 
@@ -152,8 +155,13 @@ def run_pipeline(
     logger.info("=== SPY Wave Scanner — %s %s ===", ticker, timeframe)
     feed = DataFeed(api_key=api_key, ticker=ticker)
     df = feed.get_bars(timeframe=timeframe, lookback_days=lookback_days, use_cache=use_cache)
+    market_status = "open"
     if df.empty:
-        logger.warning("No data returned — market may be closed")
+        logger.warning("No live data — attempting to load most recent cache")
+        df = _load_latest_cache(feed, ticker, timeframe, lookback_days)
+        market_status = "closed"
+    if df.empty:
+        logger.warning("No data available — market may be closed and no cache exists")
         return
     df = feed.compute_indicators(df)
     last_close = df["close"].iloc[-1]
@@ -261,7 +269,61 @@ def run_pipeline(
         alerts=alerts,
     )
 
+    # 9. Write JSON output if requested
+    if output_json:
+        ohlcv_records = []
+        for ts, row in df.iterrows():
+            ohlcv_records.append({
+                "time": ts.isoformat() if hasattr(ts, "isoformat") else str(ts),
+                "open": round(float(row["open"]), 2),
+                "high": round(float(row["high"]), 2),
+                "low": round(float(row["low"]), 2),
+                "close": round(float(row["close"]), 2),
+                "volume": int(row["volume"]),
+            })
+
+        result = scan_result_to_json(
+            ticker=ticker,
+            timestamp=datetime.now(),
+            current_price=float(last_close),
+            timeframe=timeframe,
+            bar_count=len(df),
+            ohlcv_records=ohlcv_records,
+            pivots=pivots,
+            wave_count=wave_count,
+            fib_levels=fib_levels,
+            confluence_zones=confluence_zones,
+            divergences=divergences,
+            alerts=alerts,
+            projection=projection,
+            market_status=market_status,
+        )
+
+        out_path = Path(output_json)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2))
+        logger.info("JSON output written to %s", out_path)
+
     logger.info("=== Scan complete ===")
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Cache fallback (weekends / market closed)
+# ──────────────────────────────────────────────────────────────────────────
+
+def _load_latest_cache(feed: DataFeed, ticker: str, timeframe: str, lookback_days: int):
+    """Try to load the most recent cached parquet file for this ticker/timeframe."""
+    import pandas as pd
+
+    cache_dir = feed.cache_dir
+    if not cache_dir.exists():
+        return pd.DataFrame()
+    pattern = f"{ticker}_{timeframe}_{lookback_days}d_*.parquet"
+    files = sorted(cache_dir.glob(pattern), reverse=True)
+    if files:
+        logger.info("Loading cached data from %s", files[0])
+        return pd.read_parquet(files[0])
+    return pd.DataFrame()
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -365,6 +427,12 @@ def main() -> None:
         action="store_true",
         help="Confirm wave count with higher timeframe",
     )
+    parser.add_argument(
+        "--output-json",
+        type=str,
+        default=None,
+        help="Path to write scan results as JSON (for GitHub Pages dashboard)",
+    )
     args = parser.parse_args()
 
     if args.dashboard:
@@ -383,6 +451,7 @@ def main() -> None:
             dry_run=args.dry_run,
             use_cache=not args.no_cache,
             multi_tf=args.multi_tf,
+            output_json=args.output_json,
         )
 
 

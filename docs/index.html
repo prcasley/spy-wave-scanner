@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPY Elliott Wave Scanner</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #d1d4dc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+    overflow-x: hidden;
+  }
+
+  /* Status bar */
+  #status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #131722;
+    border-bottom: 1px solid #2a2e39;
+    font-size: 13px;
+    align-items: center;
+  }
+  .stat { display: flex; gap: 4px; align-items: center; }
+  .stat-label { color: #787b86; }
+  .stat-value { color: #d1d4dc; font-weight: 600; }
+  .stat-value.up { color: #26a69a; }
+  .stat-value.down { color: #ef5350; }
+  .stat-value.conf { color: #ffeb3b; }
+
+  #market-banner {
+    display: none;
+    background: #ff9800;
+    color: #000;
+    text-align: center;
+    padding: 6px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  /* Chart container */
+  #chart-container { width: 100%; height: 400px; background: #131722; position: relative; }
+  #rsi-container { width: 100%; height: 140px; background: #131722; border-top: 1px solid #2a2e39; }
+  #macd-container { width: 100%; height: 140px; background: #131722; border-top: 1px solid #2a2e39; }
+
+  /* Panels below chart */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #2a2e39;
+  }
+  @media (max-width: 768px) {
+    .panels { grid-template-columns: 1fr; }
+    #chart-container { height: 300px; }
+  }
+
+  .panel {
+    background: #131722;
+    padding: 12px 16px;
+  }
+  .panel h3 {
+    font-size: 13px;
+    color: #787b86;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #2a2e39;
+    padding-bottom: 6px;
+  }
+  .panel-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 12px;
+  }
+  .panel-row .label { color: #787b86; }
+  .panel-row .value { color: #d1d4dc; }
+  .panel-row .value.bullish { color: #26a69a; }
+  .panel-row .value.bearish { color: #ef5350; }
+  .panel-row .value.warn { color: #ff9800; }
+
+  .alert-item {
+    padding: 6px 8px;
+    margin: 4px 0;
+    border-radius: 4px;
+    font-size: 12px;
+    border-left: 3px solid;
+  }
+  .alert-item.high { border-color: #ef5350; background: rgba(239,83,80,0.1); }
+  .alert-item.medium { border-color: #ff9800; background: rgba(255,152,0,0.1); }
+  .alert-item.low { border-color: #26a69a; background: rgba(38,166,154,0.1); }
+
+  .fib-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; }
+  .fib-label { color: #787b86; }
+  .fib-price { color: #b39ddb; font-family: monospace; }
+
+  #loading { text-align: center; padding: 60px; color: #787b86; font-size: 18px; }
+  .footer {
+    text-align: center;
+    padding: 12px;
+    color: #363a45;
+    font-size: 11px;
+    border-top: 1px solid #2a2e39;
+    background: #131722;
+  }
+</style>
+</head>
+<body>
+
+<div id="market-banner">MARKET CLOSED &mdash; Showing most recent scan data</div>
+<div id="status-bar">
+  <div class="stat"><span class="stat-label">Ticker:</span><span class="stat-value" id="sb-ticker">SPY</span></div>
+  <div class="stat"><span class="stat-label">Price:</span><span class="stat-value" id="sb-price">--</span></div>
+  <div class="stat"><span class="stat-label">Wave:</span><span class="stat-value" id="sb-wave">--</span></div>
+  <div class="stat"><span class="stat-label">Confidence:</span><span class="stat-value conf" id="sb-conf">--</span></div>
+  <div class="stat"><span class="stat-label">Target:</span><span class="stat-value" id="sb-target">--</span></div>
+  <div class="stat"><span class="stat-label">Updated:</span><span class="stat-value" id="sb-time">--</span></div>
+</div>
+
+<div id="loading">Loading scan data...</div>
+<div id="chart-container" style="display:none;"></div>
+<div id="rsi-container" style="display:none;"></div>
+<div id="macd-container" style="display:none;"></div>
+
+<div class="panels" id="panels" style="display:none;">
+  <div class="panel" id="wave-panel">
+    <h3>Wave Analysis</h3>
+    <div id="wave-info"></div>
+  </div>
+  <div class="panel" id="fib-panel">
+    <h3>Fibonacci Levels</h3>
+    <div id="fib-info"></div>
+  </div>
+  <div class="panel" id="div-panel">
+    <h3>Divergences</h3>
+    <div id="div-info"></div>
+  </div>
+  <div class="panel" id="alert-panel">
+    <h3>Alerts</h3>
+    <div id="alert-info"></div>
+  </div>
+</div>
+
+<div class="footer">
+  SPY Elliott Wave Scanner &mdash; Auto-updated during market hours via GitHub Actions
+</div>
+
+<script>
+const DATA_URL = 'data/latest_scan.json';
+const WAVE_COLORS = { '1': '#ffeb3b', '2': '#ffeb3b', '3': '#ffeb3b', '4': '#ffeb3b', '5': '#ffeb3b', 'A': '#26a69a', 'B': '#26a69a', 'C': '#26a69a' };
+const FIB_COLORS = ['#b39ddb', '#ce93d8', '#f48fb1', '#ef9a9a', '#ffcc80', '#fff59d'];
+
+function parseTime(t) {
+  const d = new Date(t);
+  return Math.floor(d.getTime() / 1000);
+}
+
+async function loadData() {
+  try {
+    const resp = await fetch(DATA_URL + '?t=' + Date.now());
+    return await resp.json();
+  } catch (e) {
+    document.getElementById('loading').textContent = 'Failed to load data. Run the scanner first.';
+    return null;
+  }
+}
+
+function renderStatusBar(data) {
+  document.getElementById('sb-ticker').textContent = data.ticker;
+  document.getElementById('sb-price').textContent = '$' + data.current_price.toFixed(2);
+
+  if (data.wave_count) {
+    const wc = data.wave_count;
+    const dir = wc.direction.toUpperCase();
+    const el = document.getElementById('sb-wave');
+    el.textContent = wc.pattern.charAt(0).toUpperCase() + wc.pattern.slice(1) + ' ' + dir;
+    el.className = 'stat-value ' + (wc.direction === 'down' ? 'down' : 'up');
+    document.getElementById('sb-conf').textContent = (wc.confidence * 100).toFixed(0) + '%';
+  }
+  if (data.projection) {
+    document.getElementById('sb-target').textContent = '$' + data.projection.primary_target.toFixed(2);
+  }
+
+  const ts = new Date(data.timestamp);
+  document.getElementById('sb-time').textContent = ts.toLocaleString();
+
+  if (data.market_status === 'closed') {
+    document.getElementById('market-banner').style.display = 'block';
+  }
+}
+
+function buildMainChart(container, data) {
+  const chart = LightweightCharts.createChart(container, {
+    width: container.clientWidth,
+    height: container.clientHeight,
+    layout: { background: { color: '#131722' }, textColor: '#d1d4dc' },
+    grid: { vertLines: { color: '#1e222d' }, horzLines: { color: '#1e222d' } },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: '#2a2e39' },
+    timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false },
+  });
+
+  // Candlestick series
+  const candleSeries = chart.addCandlestickSeries({
+    upColor: '#26a69a', downColor: '#ef5350',
+    borderUpColor: '#26a69a', borderDownColor: '#ef5350',
+    wickUpColor: '#26a69a', wickDownColor: '#ef5350',
+  });
+  const candles = data.ohlcv.map(b => ({
+    time: parseTime(b.time), open: b.open, high: b.high, low: b.low, close: b.close,
+  }));
+  candleSeries.setData(candles);
+
+  // Volume series
+  const volumeSeries = chart.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: 'vol',
+  });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+  volumeSeries.setData(data.ohlcv.map(b => ({
+    time: parseTime(b.time),
+    value: b.volume,
+    color: b.close >= b.open ? 'rgba(38,166,154,0.3)' : 'rgba(239,83,80,0.3)',
+  })));
+
+  // Wave labels as markers
+  if (data.wave_count && data.wave_count.waves.length > 0) {
+    const markers = [];
+    data.wave_count.waves.forEach(w => {
+      // Mark the END of each wave
+      markers.push({
+        time: parseTime(w.end_time),
+        position: w.end_price < w.start_price ? 'belowBar' : 'aboveBar',
+        color: WAVE_COLORS[w.label] || '#ffeb3b',
+        shape: 'circle',
+        text: w.label,
+        size: 2,
+      });
+    });
+    // Sort markers by time
+    markers.sort((a, b) => a.time - b.time);
+    candleSeries.setMarkers(markers);
+  }
+
+  // Fibonacci lines
+  if (data.fib_levels && data.fib_levels.length > 0) {
+    data.fib_levels.forEach((fib, i) => {
+      const line = candleSeries.createPriceLine({
+        price: fib.price,
+        color: FIB_COLORS[i % FIB_COLORS.length],
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: fib.label.replace(' retracement', '').replace(' extension', ' ext'),
+      });
+    });
+  }
+
+  // Responsive resize
+  new ResizeObserver(() => {
+    chart.applyOptions({ width: container.clientWidth });
+  }).observe(container);
+
+  return chart;
+}
+
+function buildRSIChart(container, data) {
+  const chart = LightweightCharts.createChart(container, {
+    width: container.clientWidth,
+    height: container.clientHeight,
+    layout: { background: { color: '#131722' }, textColor: '#787b86' },
+    grid: { vertLines: { color: '#1e222d' }, horzLines: { color: '#1e222d' } },
+    rightPriceScale: { borderColor: '#2a2e39' },
+    timeScale: { visible: false },
+  });
+
+  // Compute RSI from OHLCV data (RSI 14)
+  const closes = data.ohlcv.map(b => b.close);
+  const rsi14 = computeRSI(closes, 14);
+  const rsiData = data.ohlcv.map((b, i) => ({
+    time: parseTime(b.time),
+    value: rsi14[i] !== null ? rsi14[i] : undefined,
+  })).filter(d => d.value !== undefined);
+
+  const rsiSeries = chart.addLineSeries({ color: '#b39ddb', lineWidth: 1, title: 'RSI(14)' });
+  rsiSeries.setData(rsiData);
+
+  // Overbought/oversold lines
+  rsiSeries.createPriceLine({ price: 70, color: '#ef5350', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+  rsiSeries.createPriceLine({ price: 30, color: '#26a69a', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+
+  new ResizeObserver(() => chart.applyOptions({ width: container.clientWidth })).observe(container);
+  return chart;
+}
+
+function computeRSI(closes, period) {
+  const rsi = new Array(closes.length).fill(null);
+  if (closes.length < period + 1) return rsi;
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const change = closes[i] - closes[i - 1];
+    if (change > 0) avgGain += change; else avgLoss -= change;
+  }
+  avgGain /= period; avgLoss /= period;
+  rsi[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  for (let i = period + 1; i < closes.length; i++) {
+    const change = closes[i] - closes[i - 1];
+    avgGain = (avgGain * (period - 1) + Math.max(change, 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + Math.max(-change, 0)) / period;
+    rsi[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+  return rsi;
+}
+
+function buildMACDChart(container, data) {
+  const chart = LightweightCharts.createChart(container, {
+    width: container.clientWidth,
+    height: container.clientHeight,
+    layout: { background: { color: '#131722' }, textColor: '#787b86' },
+    grid: { vertLines: { color: '#1e222d' }, horzLines: { color: '#1e222d' } },
+    rightPriceScale: { borderColor: '#2a2e39' },
+    timeScale: { visible: false },
+  });
+
+  // Compute MACD from closes
+  const closes = data.ohlcv.map(b => b.close);
+  const emaFast = computeEMA(closes, 5);
+  const emaSlow = computeEMA(closes, 13);
+  const macd = closes.map((_, i) => (emaFast[i] !== null && emaSlow[i] !== null) ? emaFast[i] - emaSlow[i] : null);
+  const macdNonNull = macd.filter(v => v !== null);
+  const signal = computeEMA(macdNonNull, 8);
+
+  // Pad signal back
+  const signalFull = new Array(closes.length).fill(null);
+  let si = 0;
+  for (let i = 0; i < closes.length; i++) {
+    if (macd[i] !== null) { signalFull[i] = signal[si++]; }
+  }
+
+  // Histogram
+  const histSeries = chart.addHistogramSeries({ priceFormat: { type: 'price', precision: 4 }, title: 'MACD' });
+  const histData = data.ohlcv.map((b, i) => {
+    const val = (macd[i] !== null && signalFull[i] !== null) ? macd[i] - signalFull[i] : null;
+    return val !== null ? {
+      time: parseTime(b.time), value: val,
+      color: val >= 0 ? 'rgba(38,166,154,0.6)' : 'rgba(239,83,80,0.6)',
+    } : null;
+  }).filter(Boolean);
+  histSeries.setData(histData);
+
+  // MACD line
+  const macdLine = chart.addLineSeries({ color: '#2196f3', lineWidth: 1 });
+  macdLine.setData(data.ohlcv.map((b, i) => macd[i] !== null ? { time: parseTime(b.time), value: macd[i] } : null).filter(Boolean));
+
+  // Signal line
+  const sigLine = chart.addLineSeries({ color: '#ff9800', lineWidth: 1 });
+  sigLine.setData(data.ohlcv.map((b, i) => signalFull[i] !== null ? { time: parseTime(b.time), value: signalFull[i] } : null).filter(Boolean));
+
+  new ResizeObserver(() => chart.applyOptions({ width: container.clientWidth })).observe(container);
+  return chart;
+}
+
+function computeEMA(values, period) {
+  const ema = new Array(values.length).fill(null);
+  let sum = 0, count = 0;
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === null) continue;
+    if (count < period) {
+      sum += values[i]; count++;
+      if (count === period) ema[i] = sum / period;
+    } else {
+      const k = 2 / (period + 1);
+      ema[i] = values[i] * k + ema[i - 1] * (1 - k);
+    }
+  }
+  return ema;
+}
+
+function renderWavePanel(data) {
+  const el = document.getElementById('wave-info');
+  if (!data.wave_count) {
+    el.innerHTML = '<div class="panel-row"><span class="value">No wave pattern detected</span></div>';
+    return;
+  }
+  const wc = data.wave_count;
+  let html = '';
+  html += `<div class="panel-row"><span class="label">Pattern</span><span class="value">${wc.pattern} ${wc.direction}</span></div>`;
+  html += `<div class="panel-row"><span class="label">Confidence</span><span class="value conf">${(wc.confidence * 100).toFixed(0)}%</span></div>`;
+  html += `<div class="panel-row"><span class="label">Complete</span><span class="value">${wc.is_complete ? 'Yes' : 'No'}</span></div>`;
+  if (wc.invalidation_price) {
+    html += `<div class="panel-row"><span class="label">Invalidation</span><span class="value warn">$${wc.invalidation_price.toFixed(2)}</span></div>`;
+  }
+  wc.waves.forEach(w => {
+    const dir = w.end_price > w.start_price ? 'bullish' : 'bearish';
+    html += `<div class="panel-row"><span class="label">Wave ${w.label}</span><span class="value ${dir}">$${w.start_price.toFixed(2)} → $${w.end_price.toFixed(2)}</span></div>`;
+  });
+  if (data.projection) {
+    html += `<div class="panel-row" style="margin-top:8px;border-top:1px solid #2a2e39;padding-top:6px;"><span class="label">Next</span><span class="value">${data.projection.next_wave}</span></div>`;
+    html += `<div class="panel-row"><span class="label">Target</span><span class="value bullish">$${data.projection.primary_target.toFixed(2)}</span></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderFibPanel(data) {
+  const el = document.getElementById('fib-info');
+  if (!data.fib_levels || data.fib_levels.length === 0) {
+    el.innerHTML = '<div class="panel-row"><span class="value">No Fibonacci levels</span></div>';
+    return;
+  }
+  const sorted = [...data.fib_levels].sort((a, b) => b.price - a.price);
+  el.innerHTML = sorted.map(f =>
+    `<div class="fib-row"><span class="fib-label">${f.label}</span><span class="fib-price">$${f.price.toFixed(2)}</span></div>`
+  ).join('');
+}
+
+function renderDivPanel(data) {
+  const el = document.getElementById('div-info');
+  if (!data.divergences || data.divergences.length === 0) {
+    el.innerHTML = '<div class="panel-row"><span class="value" style="color:#787b86;">None detected</span></div>';
+    return;
+  }
+  el.innerHTML = data.divergences.map(d => {
+    const cls = d.type === 'bullish' ? 'bullish' : 'bearish';
+    return `<div class="panel-row"><span class="label">${d.indicator}</span><span class="value ${cls}">${d.type} (price $${d.price_1.toFixed(2)} → $${d.price_2.toFixed(2)})</span></div>`;
+  }).join('');
+}
+
+function renderAlertPanel(data) {
+  const el = document.getElementById('alert-info');
+  if (!data.alerts || data.alerts.length === 0) {
+    el.innerHTML = '<div class="panel-row"><span class="value" style="color:#787b86;">No alerts triggered</span></div>';
+    return;
+  }
+  el.innerHTML = data.alerts.map(a =>
+    `<div class="alert-item ${a.priority}">${a.message}</div>`
+  ).join('');
+}
+
+async function init() {
+  const data = await loadData();
+  if (!data) return;
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('chart-container').style.display = 'block';
+  document.getElementById('rsi-container').style.display = 'block';
+  document.getElementById('macd-container').style.display = 'block';
+  document.getElementById('panels').style.display = 'grid';
+
+  renderStatusBar(data);
+  buildMainChart(document.getElementById('chart-container'), data);
+  buildRSIChart(document.getElementById('rsi-container'), data);
+  buildMACDChart(document.getElementById('macd-container'), data);
+  renderWavePanel(data);
+  renderFibPanel(data);
+  renderDivPanel(data);
+  renderAlertPanel(data);
+}
+
+init();
+
+// Auto-refresh every 5 minutes during market hours
+setInterval(async () => {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  const day = now.getUTCDay();
+  if (day >= 1 && day <= 5 && utcHour >= 14 && utcHour < 21) {
+    location.reload();
+  }
+}, 5 * 60 * 1000);
+</script>
+</body>
+</html>
