@@ -64,6 +64,8 @@ class AlertEngine:
         projection: Optional[WaveProjection] = None,
     ) -> list[Alert]:
         """Check if the current price is near any key levels and return alerts."""
+        if current_price == 0:
+            return []
         alerts: list[Alert] = []
 
         # --- Fib level proximity ---

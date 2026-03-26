@@ -108,6 +108,8 @@ class PivotDetector:
         for i in range(1, len(alternated)):
             prev = significant[-1]
             curr = alternated[i]
+            if prev.price == 0:
+                continue
             swing_pct = abs(curr.price - prev.price) / prev.price * 100
             if swing_pct >= min_swing_pct:
                 significant.append(curr)

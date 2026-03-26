@@ -225,5 +225,7 @@ class DataFeed:
         loss = -delta.clip(upper=0)
         avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
         avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
-        rs = avg_gain / avg_loss
-        return 100 - (100 / (1 + rs))
+        rs = avg_gain / avg_loss.replace(0, np.nan)
+        rsi = 100 - (100 / (1 + rs))
+        # avg_loss == 0 means pure upward movement → RSI = 100
+        return rsi.fillna(100.0)
