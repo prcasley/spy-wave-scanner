@@ -1,0 +1,37 @@
+{
+  "optionChain": {
+    "result": [
+      {
+        "underlyingSymbol": "SPY",
+        "expirationDates": [1715731200, 1716336000, 1716940800],
+        "quote": {
+          "regularMarketPrice": 612.45,
+          "symbol": "SPY"
+        },
+        "options": [
+          {
+            "expirationDate": 1715731200,
+            "calls": [
+              {"contractSymbol":"SPY240514C00608000","strike":608.0,"lastPrice":6.20,"bid":6.10,"ask":6.30,"volume":1200,"openInterest":3500,"impliedVolatility":0.18,"inTheMoney":true},
+              {"contractSymbol":"SPY240514C00610000","strike":610.0,"lastPrice":4.55,"bid":4.45,"ask":4.65,"volume":2100,"openInterest":4200,"impliedVolatility":0.17,"inTheMoney":true},
+              {"contractSymbol":"SPY240514C00612000","strike":612.0,"lastPrice":3.10,"bid":3.00,"ask":3.20,"volume":3500,"openInterest":5100,"impliedVolatility":0.17,"inTheMoney":true},
+              {"contractSymbol":"SPY240514C00614000","strike":614.0,"lastPrice":2.85,"bid":2.75,"ask":2.95,"volume":4100,"openInterest":6300,"impliedVolatility":0.18,"inTheMoney":false},
+              {"contractSymbol":"SPY240514C00616000","strike":616.0,"lastPrice":1.80,"bid":1.70,"ask":1.90,"volume":2900,"openInterest":4800,"impliedVolatility":0.19,"inTheMoney":false},
+              {"contractSymbol":"SPY240514C00618000","strike":618.0,"lastPrice":1.10,"bid":1.05,"ask":1.15,"volume":1800,"openInterest":3700,"impliedVolatility":0.20,"inTheMoney":false},
+              {"contractSymbol":"SPY240514C00622000","strike":622.0,"lastPrice":0.40,"bid":0.35,"ask":0.45,"volume":900,"openInterest":2100,"impliedVolatility":0.22,"inTheMoney":false}
+            ],
+            "puts": [
+              {"contractSymbol":"SPY240514P00606000","strike":606.0,"lastPrice":0.50,"bid":0.45,"ask":0.55,"volume":1100,"openInterest":2900,"impliedVolatility":0.21,"inTheMoney":false},
+              {"contractSymbol":"SPY240514P00608000","strike":608.0,"lastPrice":0.85,"bid":0.80,"ask":0.90,"volume":1500,"openInterest":3300,"impliedVolatility":0.20,"inTheMoney":false},
+              {"contractSymbol":"SPY240514P00610000","strike":610.0,"lastPrice":1.40,"bid":1.30,"ask":1.50,"volume":2300,"openInterest":4400,"impliedVolatility":0.19,"inTheMoney":false},
+              {"contractSymbol":"SPY240514P00612000","strike":612.0,"lastPrice":2.20,"bid":2.10,"ask":2.30,"volume":3000,"openInterest":5000,"impliedVolatility":0.18,"inTheMoney":false},
+              {"contractSymbol":"SPY240514P00614000","strike":614.0,"lastPrice":3.50,"bid":3.40,"ask":3.60,"volume":2500,"openInterest":4100,"impliedVolatility":0.19,"inTheMoney":true},
+              {"contractSymbol":"SPY240514P00616000","strike":616.0,"lastPrice":5.20,"bid":5.10,"ask":5.30,"volume":1700,"openInterest":3500,"impliedVolatility":0.20,"inTheMoney":true}
+            ]
+          }
+        ]
+      }
+    ],
+    "error": null
+  }
+}
