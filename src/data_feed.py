@@ -1,4 +1,9 @@
-"""Module 1: Data Feed — fetch and normalise OHLCV data from Polygon.io."""
+"""Yahoo Finance data feed — OHLCV bars + indicator computation.
+
+Replaces the original Polygon implementation. Keeps the public ``DataFeed``
+class name and ``get_bars`` / ``compute_indicators`` signatures so the rest of
+the pipeline is unaffected.
+"""
 
 from __future__ import annotations
 
@@ -10,60 +15,146 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from polygon import RESTClient
+import requests
 
 logger = logging.getLogger(__name__)
 
-# Default cache directory
 _DEFAULT_CACHE_DIR = Path.home() / ".cache" / "spy-wave-scanner"
+_YAHOO_CHART_URL = "https://query2.finance.yahoo.com/v8/finance/chart/{symbol}"
+_YAHOO_FALLBACK_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_0) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36"
+)
+
+
+class DataFeedError(RuntimeError):
+    """Raised when Yahoo refuses to return usable bars. Fail loud, no mocks."""
 
 
 class DataFeed:
-    """Fetch OHLCV bars from Polygon.io and compute technical indicators."""
+    """Fetch OHLCV bars from Yahoo Finance and compute indicators.
 
-    # Map user-friendly timeframe strings to Polygon multiplier/timespan pairs
+    Parameters
+    ----------
+    ticker : str
+        Default symbol. Per-call ``get_bars(ticker=...)`` overrides it.
+    cache_dir : str, optional
+        Override the parquet cache location. Defaults to
+        ``~/.cache/spy-wave-scanner``.
+    rate_limit_rpm : int
+        Requests per minute throttle. Yahoo doesn't publish a hard limit but
+        bursts get 429'd.
+    api_key : str, optional
+        Ignored. Accepted only for backwards compatibility with old callers.
+    """
+
+    # Yahoo `interval` values per the v8 chart API
     _TF_MAP = {
-        "1min": (1, "minute"),
-        "5min": (5, "minute"),
-        "15min": (15, "minute"),
-        "1h": (1, "hour"),
-        "1day": (1, "day"),
+        "1min": ("1m", 7),
+        "5min": ("5m", 60),
+        "15min": ("15m", 60),
+        "30min": ("30m", 60),
+        "1h": ("60m", 730),
+        "1day": ("1d", 365 * 10),
     }
 
     def __init__(
         self,
-        api_key: str,
         ticker: str = "SPY",
         cache_dir: Optional[str] = None,
-        rate_limit_rpm: int = 5,
-    ):
-        self.client = RESTClient(api_key)
-        self.ticker = ticker
+        rate_limit_rpm: int = 60,
+        api_key: Optional[str] = None,  # ignored; kept for back-compat
+    ) -> None:
+        self.ticker = ticker.upper()
         self.cache_dir = Path(cache_dir) if cache_dir else _DEFAULT_CACHE_DIR
         self._min_interval = 60.0 / max(rate_limit_rpm, 1)
         self._last_call: float = 0.0
+        self._session = requests.Session()
+        self._session.headers.update(
+            {
+                "User-Agent": _USER_AGENT,
+                "Accept": "application/json,text/plain,*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+        )
+        if api_key is not None:
+            logger.debug("DataFeed: api_key argument ignored (Yahoo requires no key)")
 
     # ------------------------------------------------------------------
-    # Rate limiting
+    # Internals
     # ------------------------------------------------------------------
 
     def _throttle(self) -> None:
-        """Sleep if needed to respect Polygon API rate limits."""
         elapsed = time.time() - self._last_call
         if elapsed < self._min_interval:
-            wait = self._min_interval - elapsed
-            logger.debug("Rate limit: sleeping %.1fs", wait)
-            time.sleep(wait)
+            time.sleep(self._min_interval - elapsed)
         self._last_call = time.time()
 
-    # ------------------------------------------------------------------
-    # Caching
-    # ------------------------------------------------------------------
+    def _cache_key(self, ticker: str, timeframe: str, lookback_days: int, end: datetime) -> Path:
+        return (
+            self.cache_dir
+            / f"{ticker}_{timeframe}_{lookback_days}d_{end.strftime('%Y%m%d_%H%M')}.parquet"
+        )
 
-    def _cache_key(self, timeframe: str, lookback_days: int, end_date: datetime) -> Path:
-        """Build a cache file path for this query."""
-        date_str = end_date.strftime("%Y%m%d")
-        return self.cache_dir / f"{self.ticker}_{timeframe}_{lookback_days}d_{date_str}.parquet"
+    def _fetch_chart(self, ticker: str, interval: str, lookback_days: int) -> dict:
+        """One-shot Yahoo v8 chart fetch with one fallback host. Fail loud."""
+        params = {
+            "interval": interval,
+            "range": f"{lookback_days}d",
+            "includePrePost": "false",
+            "events": "div,splits",
+        }
+        last_err: Optional[Exception] = None
+        for url_tmpl in (_YAHOO_CHART_URL, _YAHOO_FALLBACK_URL):
+            url = url_tmpl.format(symbol=ticker)
+            try:
+                self._throttle()
+                resp = self._session.get(url, params=params, timeout=15)
+                if resp.status_code == 200:
+                    payload = resp.json()
+                    err = (payload.get("chart") or {}).get("error")
+                    if err:
+                        raise DataFeedError(f"Yahoo error for {ticker}: {err}")
+                    return payload
+                last_err = DataFeedError(
+                    f"Yahoo HTTP {resp.status_code} for {ticker} ({url}): {resp.text[:200]}"
+                )
+            except (requests.RequestException, ValueError) as exc:
+                last_err = exc
+        raise DataFeedError(
+            f"Yahoo fetch failed for {ticker} after both hosts: {last_err}"
+        )
+
+    @staticmethod
+    def _payload_to_frame(payload: dict) -> pd.DataFrame:
+        chart = payload.get("chart") or {}
+        results = chart.get("result") or []
+        if not results:
+            return pd.DataFrame()
+        result = results[0]
+        timestamps = result.get("timestamp") or []
+        indicators = (result.get("indicators") or {}).get("quote") or [{}]
+        quote = indicators[0]
+        if not timestamps or not quote:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(
+            {
+                "open": quote.get("open") or [],
+                "high": quote.get("high") or [],
+                "low": quote.get("low") or [],
+                "close": quote.get("close") or [],
+                "volume": quote.get("volume") or [],
+            }
+        )
+        df["timestamp"] = pd.to_datetime(timestamps, unit="s", utc=True)
+        df.set_index("timestamp", inplace=True)
+        df.sort_index(inplace=True)
+        df = df.dropna(subset=["open", "high", "low", "close"])
+        df["vwap"] = np.nan  # Yahoo doesn't return vwap on chart endpoint
+        return df
 
     # ------------------------------------------------------------------
     # Public API
@@ -75,151 +166,88 @@ class DataFeed:
         lookback_days: int = 5,
         end_date: Optional[datetime] = None,
         use_cache: bool = True,
+        ticker: Optional[str] = None,
     ) -> pd.DataFrame:
-        """Fetch OHLCV bars from Polygon.io.
+        """Fetch OHLCV from Yahoo. Indicators are added separately.
 
-        Parameters
-        ----------
-        timeframe : str
-            One of ``1min``, ``5min``, ``15min``, ``1h``, ``1day``.
-        lookback_days : int
-            Number of calendar days to look back.
-        end_date : datetime, optional
-            End of the query window.  Defaults to now.
-        use_cache : bool
-            If True, check for cached data before hitting the API.
-
-        Returns
-        -------
-        pd.DataFrame
-            Columns: open, high, low, close, volume, vwap, timestamp
-            Indexed by a ``DatetimeIndex``.
+        Returns columns: open, high, low, close, volume, vwap.
+        Indexed by a UTC ``DatetimeIndex``.
         """
+        sym = (ticker or self.ticker).upper()
         if timeframe not in self._TF_MAP:
             raise ValueError(
                 f"Unsupported timeframe '{timeframe}'. "
                 f"Choose from {list(self._TF_MAP)}"
             )
+        interval, max_lookback = self._TF_MAP[timeframe]
+        lookback_days = min(lookback_days, max_lookback)
+        end = end_date or datetime.utcnow()
 
-        end = end_date or datetime.now()
-
-        # Check cache first
         if use_cache:
-            cache_file = self._cache_key(timeframe, lookback_days, end)
+            cache_file = self._cache_key(sym, timeframe, lookback_days, end)
             if cache_file.exists():
-                logger.info("Loading cached data from %s", cache_file)
+                logger.info("Loading cached bars: %s", cache_file)
                 return pd.read_parquet(cache_file)
 
-        multiplier, timespan = self._TF_MAP[timeframe]
-        start = end - timedelta(days=lookback_days)
+        payload = self._fetch_chart(sym, interval, lookback_days)
+        df = self._payload_to_frame(payload)
 
-        self._throttle()
-
-        aggs = self.client.get_aggs(
-            ticker=self.ticker,
-            multiplier=multiplier,
-            timespan=timespan,
-            from_=start.strftime("%Y-%m-%d"),
-            to=end.strftime("%Y-%m-%d"),
-            limit=50_000,
-        )
-
-        if not aggs:
-            logger.warning("No bars returned for %s %s", self.ticker, timeframe)
-            return pd.DataFrame()
-
-        rows = []
-        for bar in aggs:
-            rows.append(
-                {
-                    "open": bar.open,
-                    "high": bar.high,
-                    "low": bar.low,
-                    "close": bar.close,
-                    "volume": bar.volume,
-                    "vwap": getattr(bar, "vwap", np.nan),
-                    "timestamp": pd.Timestamp(bar.timestamp, unit="ms", tz="UTC"),
-                }
+        if df.empty:
+            raise DataFeedError(
+                f"Yahoo returned no bars for {sym} {timeframe} ({lookback_days}d)"
             )
 
-        df = pd.DataFrame(rows)
-        df.set_index("timestamp", inplace=True)
-        df.sort_index(inplace=True)
         logger.info(
-            "Fetched %d bars for %s (%s, %d-day lookback)",
-            len(df), self.ticker, timeframe, lookback_days,
+            "Fetched %d bars for %s (%s, %dd lookback)",
+            len(df), sym, timeframe, lookback_days,
         )
 
-        # Save to cache
         if use_cache:
-            cache_file = self._cache_key(timeframe, lookback_days, end)
+            cache_file = self._cache_key(sym, timeframe, lookback_days, end)
             cache_file.parent.mkdir(parents=True, exist_ok=True)
             df.to_parquet(cache_file)
-            logger.info("Cached data to %s", cache_file)
 
         return df
 
-    def get_realtime_quote(self) -> dict:
-        """Return current bid / ask / last for proximity alert checks."""
-        self._throttle()
-        snapshot = self.client.get_snapshot_ticker(
-            "stocks", self.ticker
-        )
+    def get_realtime_quote(self, ticker: Optional[str] = None) -> dict:
+        """Use the last 1-minute bar as a real-time-ish quote. Fail loud on miss."""
+        sym = (ticker or self.ticker).upper()
+        df = self.get_bars(timeframe="1min", lookback_days=1, use_cache=False, ticker=sym)
+        last = df.iloc[-1]
         return {
-            "ticker": self.ticker,
-            "last": snapshot.last_trade.price if snapshot.last_trade else None,
-            "bid": snapshot.last_quote.bid if snapshot.last_quote else None,
-            "ask": snapshot.last_quote.ask if snapshot.last_quote else None,
-            "timestamp": datetime.now(),
+            "ticker": sym,
+            "last": float(last["close"]),
+            "bid": None,
+            "ask": None,
+            "timestamp": df.index[-1].to_pydatetime(),
         }
 
     def compute_indicators(
         self,
         df: pd.DataFrame,
-        rsi_periods: list[int] | None = None,
+        rsi_periods: Optional[list[int]] = None,
         macd_fast: int = 5,
         macd_slow: int = 13,
         macd_signal: int = 8,
         volume_sma_period: int = 20,
     ) -> pd.DataFrame:
-        """Add RSI, MACD, and Volume SMA columns to an OHLCV DataFrame.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Must contain at least ``close`` and ``volume`` columns.
-        rsi_periods : list[int]
-            RSI look-back windows.  Defaults to ``[7, 14]``.
-        macd_fast, macd_slow, macd_signal : int
-            MACD parameters.
-        volume_sma_period : int
-            Window for volume simple moving average.
-        """
+        """Add RSI, MACD, and Volume SMA columns to an OHLCV DataFrame."""
         if df.empty:
             return df
-
         rsi_periods = rsi_periods or [7, 14]
         df = df.copy()
-
-        # RSI (Wilder's smoothing)
         for period in rsi_periods:
             df[f"rsi_{period}"] = self._compute_rsi(df["close"], period)
-
-        # MACD
         ema_fast = df["close"].ewm(span=macd_fast, adjust=False).mean()
         ema_slow = df["close"].ewm(span=macd_slow, adjust=False).mean()
         df["macd"] = ema_fast - ema_slow
         df["macd_signal"] = df["macd"].ewm(span=macd_signal, adjust=False).mean()
         df["macd_histogram"] = df["macd"] - df["macd_signal"]
-
-        # Volume SMA
         df["volume_sma"] = df["volume"].rolling(window=volume_sma_period).mean()
-
         return df
 
     @staticmethod
     def _compute_rsi(series: pd.Series, period: int) -> pd.Series:
-        """Compute RSI using Wilder's exponential smoothing."""
         delta = series.diff()
         gain = delta.clip(lower=0)
         loss = -delta.clip(upper=0)

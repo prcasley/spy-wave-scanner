@@ -1,11 +1,17 @@
 # Alert delivery configuration
 # All sensitive values (webhooks, API keys) should be set via environment variables.
 
-slack:
+discord:
   enabled: true
-  # Set SLACK_WEBHOOK environment variable
+  # Set DISCORD_WEBHOOK_URL environment variable
+  webhook_env_var: "DISCORD_WEBHOOK_URL"
+  min_confluence_score: 70
+
+slack:
+  enabled: false
+  # Optional legacy channel — set SLACK_WEBHOOK to enable
   webhook_env_var: "SLACK_WEBHOOK"
-  channel: "#spy-alerts"
+  channel: "#wave-alerts"
 
 email:
   enabled: false

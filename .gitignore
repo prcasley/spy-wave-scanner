@@ -208,3 +208,8 @@ __marimo__/
 
 # SPY Wave Scanner data cache
 cache/
+
+# Demo / generated artifacts
+demo_output/
+signals/
+signals.db
