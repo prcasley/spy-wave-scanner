@@ -224,9 +224,15 @@ def build_signal(
     chain: OptionsChain,
     strategy: StrategyChoice,
     timestamp: Optional[datetime] = None,
+    direction: Optional[str] = None,
 ) -> dict:
-    """Assemble the canonical signal dict and validate it against the schema."""
-    direction = _wave_direction(wave_count)
+    """Assemble the canonical signal dict and validate it against the schema.
+
+    *direction* overrides the raw wave direction — used when a completed
+    correction is traded as a reversal. It must match the direction the
+    *strategy* legs were built for.
+    """
+    direction = direction or _wave_direction(wave_count)
     chain_iv = strategy.legs[0].iv if strategy.legs else 0.0
     score, factors = _confluence_factors(
         wave_count, divergences, confluence_zones, chain_iv

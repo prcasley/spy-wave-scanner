@@ -36,6 +36,22 @@ def _direction_label(wave_count) -> str:
     return "long" if wave_count.direction == WaveDirection.UP else "short"
 
 
+def _trade_plan(wave_count) -> tuple[str, Optional[float]]:
+    """Return (trade_direction, stop_price) for the count.
+
+    A *completed* ABC correction is traded as a reversal: short the end of an
+    up-correction / buy the end of a down-correction, with the stop beyond the
+    C-wave extreme. Everything else trades with the wave direction and uses
+    the count's own invalidation level.
+    """
+    if wave_count.pattern_type == "corrective" and wave_count.is_complete:
+        c_end = wave_count.waves[-1].end.price
+        if wave_count.direction == WaveDirection.UP:
+            return "short", c_end
+        return "long", c_end
+    return _direction_label(wave_count), wave_count.invalidation_price
+
+
 def _scan_single(
     ticker: str,
     *,
@@ -95,11 +111,16 @@ def _scan_single(
     divergences = div_det.detect_rsi_divergence(df, pivots)
     divergences += div_det.detect_macd_divergence(df, pivots)
 
+    direction, stop_price = _trade_plan(wave_count)
+    # Keep the count's invalidation consistent with the tradeable stop so the
+    # signal JSON, options strategy, and app all show the same level.
+    if stop_price is not None:
+        wave_count.invalidation_price = stop_price
+
     projection = wc.project_targets(wave_count)
     spot = float(df["close"].iloc[-1])
 
     chain = options_feed.get_chain(ticker, target_dte=target_dte)
-    direction = _direction_label(wave_count)
     target_price = projection.primary_target if projection else None
 
     strategy = select_strategy(
@@ -118,6 +139,7 @@ def _scan_single(
         confluence_zones=confluence_zones,
         chain=chain,
         strategy=strategy,
+        direction=direction,
     )
     return signal
 
