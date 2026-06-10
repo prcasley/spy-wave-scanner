@@ -1,8 +1,6 @@
 """Unit tests for Black-Scholes Greeks."""
 
-import math
 
-import pytest
 
 from src.greeks import delta, probability_above, probability_itm
 

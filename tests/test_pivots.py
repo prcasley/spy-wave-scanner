@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from src.models import Pivot, PivotType, SequenceClassification
 from src.pivot_detector import PivotDetector
@@ -18,10 +17,10 @@ def _make_df(highs: list[float], lows: list[float]) -> pd.DataFrame:
     idx = pd.date_range("2025-01-10 09:30", periods=n, freq="5min")
     return pd.DataFrame(
         {
-            "open": [(h + l) / 2 for h, l in zip(highs, lows)],
+            "open": [(h + lo) / 2 for h, lo in zip(highs, lows)],
             "high": highs,
             "low": lows,
-            "close": [(h + l) / 2 for h, l in zip(highs, lows)],
+            "close": [(h + lo) / 2 for h, lo in zip(highs, lows)],
             "volume": [1000] * n,
         },
         index=idx,

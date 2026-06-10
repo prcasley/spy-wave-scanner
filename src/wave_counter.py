@@ -6,9 +6,7 @@ import logging
 from typing import Optional
 
 from src.models import (
-    ConfluenceZone,
     CorrectivePattern,
-    FibLevel,
     Pivot,
     PivotType,
     Wave,

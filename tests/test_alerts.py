@@ -2,7 +2,6 @@
 
 from datetime import datetime, timedelta
 
-import pytest
 
 from src.alert_engine import AlertEngine
 from src.models import (

@@ -1,0 +1,35 @@
+name: Live Data Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Stage-by-stage live check (SPY)
+        run: python scripts/check_live.py SPY
+
+      - name: Trade of the Day (live, small universe)
+        env:
+          DAILY_PICK_UNIVERSE: SPY,QQQ,NVDA,AAPL,TSLA
+        run: |
+          python - <<'EOF'
+          import json, logging
+          logging.basicConfig(level=logging.INFO)
+          from src.daily_pick import get_or_create_pick
+          pick = get_or_create_pick("auto", force=True)
+          print("\n=== TRADE OF THE DAY (LIVE) ===")
+          print(json.dumps(pick, indent=2))
+          EOF

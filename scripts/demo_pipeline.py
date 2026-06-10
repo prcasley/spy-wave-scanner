@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -56,12 +56,6 @@ def _patched_get_bars(self, *, timeframe="1h", lookback_days=60, end_date=None,
     """Return the fixture frame regardless of timeframe/ticker — demo only."""
     df = _fixture_bars()
     return df
-
-
-def _patched_get_chain(self, ticker, target_dte=7):
-    payload = _fixture_options()
-    chain = OptionsFeed._original_get_chain(self, ticker, target_dte)  # type: ignore[attr-defined]
-    return chain
 
 
 def _patched_request(self, ticker, expiration_unix):

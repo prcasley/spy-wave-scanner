@@ -78,10 +78,10 @@ class DiscordWebhook:
         )
         legs_text = (
             "\n".join(
-                f"  {l['action'].upper()} {l['type'].upper()} "
-                f"${l['strike']:.2f} @ ${l['premium']:.2f} "
-                f"(Δ={l['delta']:+.2f}, IV={l['iv']:.0%})"
-                for l in legs
+                f"  {leg_['action'].upper()} {leg_['type'].upper()} "
+                f"${leg_['strike']:.2f} @ ${leg_['premium']:.2f} "
+                f"(Δ={leg_['delta']:+.2f}, IV={leg_['iv']:.0%})"
+                for leg_ in legs
             )
             or "  —"
         )

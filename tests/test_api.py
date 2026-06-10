@@ -1,6 +1,5 @@
 """Smoke tests for the FastAPI app."""
 
-import os
 from datetime import datetime, timezone
 from unittest.mock import patch
 

@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from src.options_feed import OptionsFeed
-from src.strategy_selector import StrategySelectorError, select_strategy
+from src.strategy_selector import select_strategy
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "yahoo_options_sample.json"
@@ -38,7 +38,7 @@ def test_long_high_iv_yields_bull_call_spread(chain):
     choice = select_strategy(chain=chain, direction="long", high_iv_threshold=0.10)
     assert choice.structure == "bull_call_spread"
     assert len(choice.legs) == 2
-    actions = {l.action for l in choice.legs}
+    actions = {leg.action for leg in choice.legs}
     assert actions == {"buy", "sell"}
 
 

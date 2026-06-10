@@ -94,7 +94,6 @@ def test_build_signal_validates_against_schema(df, chain):
 
 
 def test_validate_rejects_missing_required_fields():
-    from jsonschema.exceptions import ValidationError
 
     bad = {"signal_id": "x"}  # missing everything else
     with pytest.raises(Exception):

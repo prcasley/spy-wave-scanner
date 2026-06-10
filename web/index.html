@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Wave Trader — Trade of the Day</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="apple-touch-icon" href="/static/icons/icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Wave Trader" />
+  <meta name="theme-color" content="#0b0f14" />
+</head>
+<body>
+  <header>
+    <h1>WAVE&nbsp;TRADER</h1>
+    <span id="date-label"></span>
+  </header>
+
+  <div id="offline-banner" class="hidden">OFFLINE — showing last saved pick</div>
+
+  <nav id="style-picker">
+    <button data-style="auto" class="active">Auto</button>
+    <button data-style="options">Options</button>
+    <button data-style="stock">Stock</button>
+    <button data-style="short">Short</button>
+  </nav>
+
+  <main id="content">
+    <div id="loading" class="center-note">Scanning the universe…</div>
+    <div id="error" class="center-note hidden"></div>
+
+    <section id="pick-card" class="hidden">
+      <div class="card-head">
+        <div>
+          <div id="ticker" class="ticker"></div>
+          <div id="trade-type" class="trade-type"></div>
+        </div>
+        <div class="head-right">
+          <span id="direction-badge" class="badge"></span>
+          <div class="score-wrap">
+            <svg viewBox="0 0 44 44" class="score-ring">
+              <circle cx="22" cy="22" r="19" class="ring-bg"/>
+              <circle cx="22" cy="22" r="19" class="ring-fg" id="ring-fg"/>
+            </svg>
+            <span id="score-num"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="levels">
+        <div class="level"><label>Spot</label><span id="spot"></span></div>
+        <div class="level"><label>Entry</label><span id="entry"></span></div>
+        <div class="level danger"><label>Stop</label><span id="stop"></span></div>
+        <div class="level good"><label>Target</label><span id="target"></span></div>
+      </div>
+
+      <div id="options-block" class="hidden">
+        <h3>Options structure <span id="expiry-label"></span></h3>
+        <div id="legs"></div>
+        <div class="opt-stats">
+          <div><label>Max loss</label><span id="max-loss"></span></div>
+          <div><label>Max gain</label><span id="max-gain"></span></div>
+          <div><label>Breakeven</label><span id="breakeven"></span></div>
+          <div><label>PoP</label><span id="pop"></span></div>
+        </div>
+      </div>
+
+      <div id="stock-block" class="hidden">
+        <h3>Share plan</h3>
+        <div class="opt-stats">
+          <div><label>Risk/share</label><span id="risk-share"></span></div>
+          <div><label>Reward/share</label><span id="reward-share"></span></div>
+          <div><label>R:R</label><span id="rr"></span></div>
+        </div>
+      </div>
+
+      <h3>Why this trade</h3>
+      <ul id="rationale"></ul>
+
+      <div class="wave-line" id="wave-line"></div>
+      <div class="updated" id="updated"></div>
+    </section>
+  </main>
+
+  <footer>
+    <button id="refresh-btn">↻ Re-scan now</button>
+    <div class="disclaimer">Signals are analysis, not financial advice. Risk only what you can lose.</div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

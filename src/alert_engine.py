@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import smtplib
 import os
@@ -18,10 +17,8 @@ from src.models import (
     AlertType,
     ConfluenceZone,
     Divergence,
-    DivergenceType,
     FibLevel,
     WaveCount,
-    WaveLabel,
     WaveProjection,
 )
 

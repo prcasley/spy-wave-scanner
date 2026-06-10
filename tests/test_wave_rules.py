@@ -2,8 +2,6 @@
 
 from datetime import datetime, timedelta
 
-import pytest
-
 from src.models import (
     Pivot,
     PivotType,
@@ -159,7 +157,7 @@ class TestProjection:
         """With only W1 and W2, should project Wave 3."""
         wc = WaveCounter()
         pivots = _make_impulse_down()[:3]  # origin, W1 end, W2 end
-        result = wc.count_impulse(pivots, direction=WaveDirection.DOWN)
+        wc.count_impulse(pivots, direction=WaveDirection.DOWN)
         # Only 3 pivots → won't get 5 waves; test via manual construction
         w1 = Wave(WaveLabel.W1, pivots[0], pivots[1])
         w2 = Wave(WaveLabel.W2, pivots[1], pivots[2])

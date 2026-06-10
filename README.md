@@ -5,7 +5,41 @@ options data from Yahoo Finance, runs the wave engine, picks an options
 structure, and emits a structured trade signal that other systems can consume.
 
 Backed by a FastAPI service, in-process scheduler, JSONL + SQLite persistence,
-and a Discord webhook for high-confluence alerts.
+and a Discord webhook for high-confluence alerts. Ships with **Wave Trader**,
+an installable iPhone app (PWA) that shows one recommended trade per day.
+
+## Wave Trader — the iPhone app
+
+The server serves a mobile app at `/`. It recommends **one trade per day**
+from a configurable universe, ranked by confluence score. You pick the style:
+
+| Style | Behaviour |
+|---|---|
+| **Auto** | Engine decides: options when confluence ≥ 60, shares otherwise |
+| **Options** | Always an options structure (long call/put or debit spread from the live chain) |
+| **Stock** | Always shares: buy/hold for longs, short-sell for shorts |
+| **Short** | Only short-direction setups |
+
+Each pick shows entry zone, stop (wave invalidation), targets, options legs
+with Greeks, risk/reward, and the rationale behind the call. Picks are
+idempotent per day — the recommendation doesn't flip-flop intraday (the
+↻ button forces a re-scan).
+
+**Install on iPhone:**
+
+1. Deploy the server (Railway, or any host running `uvicorn src.api:app`)
+2. Open the URL in Safari on your phone
+3. Share → **Add to Home Screen**
+4. It launches fullscreen like a native app; the last pick is available
+   offline (service worker + local cache)
+
+To wrap it as a true App Store binary later, point a
+[Capacitor](https://capacitorjs.com) shell at the deployed URL — the web app
+needs no changes.
+
+**Local use:** run `uvicorn src.api:app --host 0.0.0.0 --port 8000` on your
+Mac/PC and open `http://<your-lan-ip>:8000` from your phone on the same
+Wi-Fi. Works without any cloud deployment.
 
 ## Features
 
@@ -77,10 +111,25 @@ curl -X POST "http://localhost:8000/api/scan?tickers=AAPL,SPY"
 
 | Var | Default | Purpose |
 |---|---|---|
-| `SCAN_TICKERS` | `SPY,QQQ,IWM,DIA` | Comma-separated universe |
+| `SCAN_TICKERS` | `SPY,QQQ,IWM,DIA` | Comma-separated universe for periodic scans |
+| `DAILY_PICK_UNIVERSE` | 16 liquid names | Universe for the Trade-of-the-Day ranking |
 | `SCAN_INTERVAL_MIN` | `15` | Minutes between scheduled scans |
 | `DISCORD_WEBHOOK_URL` | unset | Channel for high-confluence alerts |
 | `DISABLE_SCHEDULER` | unset | Set to `1` to run API without the cron |
+
+## Trade-of-the-Day API
+
+```bash
+GET  /api/pick/today?style=auto      # auto | options | stock | short
+POST /api/pick/refresh?style=auto    # force a re-scan
+GET  /api/pick/history?limit=30
+```
+
+Returns the pick with `ticker`, `direction`, `trade_type`
+(`long_call`/`bull_call_spread`/`long_put`/`bear_put_spread`/`buy_hold`/
+`short_sell`), `rationale[]`, `stock_plan` (entry/stop/target/R:R for share
+trades), and the full underlying `signal`. 404 with a reason when nothing
+qualifies (e.g. `style=short` on a bullish day).
 
 ## Running tests
 
