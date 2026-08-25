@@ -46,10 +46,39 @@ spy-wave-scanner/
 │   ├── test_wave_rules.py     [189L]  # Cardinal rule validation, projection, corrective patterns
 │   └── test_alerts.py         [199L]  # Proximity alerts, cooldown, formatting, divergence alerts
 │
+├── dashboard/                         # Positioning dashboard — standalone, stdlib only
+│   ├── generate.py            [557L]  # Twelve Data prices + Alpha Vantage put/call → docs/ + email
+│   ├── test_generate.py       [167L]  # Chart/email/degradation invariants (python dashboard/test_generate.py)
+│   ├── requirements.txt               # Intentionally empty — stdlib only
+│   └── README.md                      # Setup, API budget, DST, design notes (READ BEFORE EDITING)
+│
+├── docs/                              # GitHub Pages output — REGENERATED, do not hand-edit
+│   ├── index.html                     # Latest dashboard
+│   ├── latest.json                    # Machine-readable snapshot (feeds the options scanner)
+│   ├── archive/                       # One dated file per run
+│   └── .nojekyll
+│
 └── .github/
     └── workflows/
-        └── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy)
+        ├── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy)
+        └── dashboard.yml              # Positioning dashboard: 9:29am + 3:59pm ET weekdays, deploys Pages
 ```
+
+## Positioning Dashboard (dashboard/)
+
+Standalone from the wave scanner — stdlib only, no shared imports, its own test runner.
+Read `dashboard/README.md` before changing it. Three invariants there look odd and are
+load-bearing; each is pinned by a test in `dashboard/test_generate.py` that fails if reverted:
+
+- **Chart downsampling must preserve both true extremes**, including when the max and min
+  fall in the same bucket. Otherwise an axis label contradicts the price in the card text.
+- **Email colour rides on `bgcolor` attributes, never CSS `background`.** iOS Gmail strips
+  `background` but keeps text colour, rendering white-on-white. The CTA button counts.
+- **Missing data reads as missing.** The Alpha Vantage free tier is 25 calls/day and is the
+  binding constraint past ~12 tickers. Gaps show `n/a` with the reason, never a stale number.
+
+`docs/` is generated output. Edit `dashboard/generate.py`, never `docs/index.html`.
+`docs/latest.json` is the intended integration surface for the Options Flow Scanner.
 
 ## Code Architecture Rules
 
