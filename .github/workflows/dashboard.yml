@@ -35,13 +35,23 @@ jobs:
       - name: Pick slot from schedule
         id: slot
         run: |
+          # Match on the MINUTE (29 = morning, 59 = afternoon), not the whole
+          # cron string. The hour shifts with daylight saving; the minute does
+          # not. Comparing the full string meant the documented November edit
+          # silently relabelled the 9:29am run as "close".
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "slot=${{ inputs.slot }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "29 13 * * 1-5" ]; then
+          elif [ "${{ startsWith(github.event.schedule, '29 ') }}" = "true" ]; then
             echo "slot=preopen" >> "$GITHUB_OUTPUT"
           else
             echo "slot=close" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Test the generator
+        # Standard library only, so this needs no install. Pins the chart and
+        # email invariants documented in dashboard/README.md — see the design
+        # notes there before changing any of them.
+        run: python dashboard/test_generate.py
 
       - name: Generate dashboard
         env:

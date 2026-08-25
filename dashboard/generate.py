@@ -225,7 +225,7 @@ def downsample(values: list[float], n: int):
     if L <= n:
         return list(values), values.index(max(values))
     gmax, gmin = values.index(max(values)), values.index(min(values))
-    out, hit = [], None
+    out, hit, low_hit = [], None, None
     for i in range(n):
         a = round(i * L / n)
         b = max(a + 1, round((i + 1) * L / n))
@@ -233,9 +233,18 @@ def downsample(values: list[float], n: int):
         if gmax in seg:
             out.append(values[gmax]); hit = i
         elif gmin in seg:
-            out.append(values[gmin])
+            out.append(values[gmin]); low_hit = i
         else:
             out.append(values[seg[-1]])
+    # A sharp spike and the low can land in the SAME bucket. The peak wins that
+    # bar, so without this the bottom axis under-reports the true low — the same
+    # bug this function exists to prevent, just on the other end of the axis.
+    # Re-home the low into the nearest neighbouring bar.
+    if low_hit is None and hit is not None:
+        for j in (hit - 1, hit + 1):
+            if 0 <= j < n:
+                out[j] = values[gmin]
+                break
     return out, hit
 
 
@@ -431,10 +440,14 @@ def render_email(rows: list[dict], stamp: str, notes: list[str], url: str | None
                         f'{r["pcr"]:.2f}</span> {bar}<br>')
         pcr_txt.append(f'  {r["symbol"]:<5}{r["pcr"]:.2f}  {bar}')
 
+    # The button obeys the same rule as the charts: colour rides on a bgcolor
+    # ATTRIBUTE, never CSS `background`, which iOS Gmail strips off the <a>.
     link = (f'<tr><td bgcolor="#121212" style="border-radius:12px;padding:16px;text-align:center">'
-            f'<a href="{url}" style="display:inline-block;padding:13px 28px;background:#3987e5;'
-            f'color:#fff;text-decoration:none;border-radius:9px;font-weight:600;font-size:16px">'
-            f'Open the full dashboard &rarr;</a></td></tr>'
+            f'<table border="0" cellpadding="0" cellspacing="0" align="center"><tr>'
+            f'<td bgcolor="#3987e5" align="center" style="border-radius:9px;padding:13px 28px">'
+            f'<a href="{url}" style="color:#ffffff;text-decoration:none;'
+            f'font-weight:600;font-size:16px">Open the full dashboard &rarr;</a>'
+            f'</td></tr></table></td></tr>'
             f'<tr><td height="14" style="font-size:1px;line-height:1px">&nbsp;</td></tr>') if url else ""
 
     note_line = " ".join(notes) if notes else ""

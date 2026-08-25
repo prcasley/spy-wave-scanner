@@ -43,6 +43,11 @@ rather than silently showing a stale number.
 Cron is UTC and does not shift. The schedule is correct for **EDT**. When EST begins in
 November, change both crons to `29 14` and `59 20`.
 
+That is the only edit needed. The preopen/close slot is chosen from the cron's *minute*
+(`29` = morning, `59` = afternoon) precisely because the hour moves and the minute does not —
+so shifting the hours cannot relabel a run. Do not reintroduce a comparison against the whole
+cron string.
+
 ## Design notes
 
 Two decisions that look odd but are deliberate:
@@ -52,8 +57,19 @@ Two decisions that look odd but are deliberate:
 this the axis label can disagree with the peak quoted in the text — an earlier version showed
 an axis top of 329 against a real peak of 346.
 
+The max and the min can fall in the *same* bucket, and only one bar can hold a value. The peak
+wins it and the low is re-homed into the neighbouring bar, so both axis labels stay true. Skip
+that step and the bottom axis silently under-reports — the identical bug, on the other end of
+the scale. It is not hypothetical: a spike adjacent to a trough triggers it, which showed up in
+roughly 4% of randomly generated 100-bar series.
+
 **Charts use `bgcolor` attributes, never CSS `background`.** The iOS Gmail app strips
 `background` from a `<div>` while keeping the text colour, which renders white-on-white and
 makes the chart invisible. Table cells with `bgcolor` survive. Every sized cell also carries
 `&nbsp;` because empty cells get collapsed. A unicode block sparkline sits under each chart
 as a text fallback that no client can strip.
+
+This applies to the *button* too, not just the charts. The "Open the full dashboard" CTA gets
+its colour from a `bgcolor` on a wrapping table cell rather than `background` on the `<a>`, so
+it survives the same stripping. This path only renders when `PAGES_URL` is set, which is why
+it is easy to miss when testing without one.
