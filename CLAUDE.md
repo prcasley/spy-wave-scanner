@@ -22,7 +22,10 @@ spy-wave-scanner/
 │   └── alert_config.yaml             # Slack webhooks, email, SMS delivery config
 │
 ├── dashboard/
-│   ├── generate.py            [544L]  # Positioning dashboard generator — Twelve Data + Alpha Vantage, stdlib only
+│   ├── generate.py            [664L]  # Positioning dashboard generator — Twelve Data + Alpha Vantage, stdlib only
+│   ├── deepdive.py            [102L]  # PROTOTYPE — single-ticker gate score; needs /tmp/spy/ inputs, not runnable as-is
+│   ├── deeppage.py            [320L]  # PROTOTYPE — deep-dive HTML renderer; same /tmp/spy/ dependency
+│   ├── emaildeep.py           [211L]  # PROTOTYPE — deep-dive email renderer; same /tmp/spy/ dependency
 │   ├── README.md                      # Setup (secrets/vars/Pages), API budget math, DST notes
 │   └── requirements.txt               # Intentionally empty — generator is pure stdlib
 │

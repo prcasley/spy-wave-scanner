@@ -14,7 +14,7 @@ Env vars:
   SMTP_USER        optional  gmail address       — email skipped if unset
   SMTP_PASS        optional  gmail app password
   MAIL_TO          optional  recipient (defaults to SMTP_USER)
-  TICKERS          optional  comma list, default SPY,QQQ,NVDA,TSLA,BE,MU,ACN
+  TICKERS          optional  comma list, default SPY,QQQ,NVDA,TSLA,BE,MU,ACN,AVGO,SNDK,SPCX
   SLOT             optional  "preopen" | "close" — changes framing only
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ DOCS   = os.path.join(ROOT, "docs")
 TD_KEY = os.environ.get("TWELVEDATA_KEY", "").strip()
 AV_KEY = os.environ.get("ALPHAVANTAGE_KEY", "").strip()
 TICKERS = [t.strip().upper() for t in
-           os.environ.get("TICKERS", "SPY,QQQ,NVDA,TSLA,BE,MU,ACN").split(",") if t.strip()]
+           os.environ.get("TICKERS", "SPY,QQQ,NVDA,TSLA,BE,MU,ACN,AVGO,SNDK,SPCX").split(",") if t.strip()]
 SLOT   = os.environ.get("SLOT", "close").lower()
 INDEXES = {"SPY", "QQQ", "DIA", "IWM", "VTI"}
 
@@ -100,13 +100,103 @@ class TwelveData:
         return vals  # newest first
 
 
+class PutCallBaseline:
+    """A rolling per-ticker history of the full-chain put/call ratio.
+
+    Why this exists: the absolute ratio is close to meaningless on its own.
+    SPY carries permanent structural put demand because it is the market's
+    default hedging vehicle, so its baseline sits ABOVE 1.00 and a 1.05 print
+    is unusually call-heavy. NVDA runs far below 1.00, where 1.05 would be
+    alarmed. The same number means opposite things. Only the ticker's own
+    distribution can tell them apart, so we accumulate one — two points per
+    weekday, free, no extra API calls.
+
+    Until there are at least MIN_N points the stats are reported as
+    'insufficient' rather than dressed up as a percentile.
+    """
+    MIN_N = 40          # below this, refuse to quote a percentile
+    MAX_N = 750         # ~18 months per ticker, then drop the oldest
+
+    def __init__(self, path: str):
+        self.path = path
+        self.data = {}
+        try:
+            with open(path) as f:
+                self.data = json.load(f)
+        except (OSError, ValueError):
+            pass        # first run, or the file got corrupted — start clean
+
+    def append(self, symbol: str, day: str, ratio: float) -> None:
+        series = self.data.setdefault(symbol, [])
+        if series and series[-1][0] == day and abs(series[-1][1] - ratio) < 1e-9:
+            return      # same day, unchanged value — don't double count
+        series.append([day, round(ratio, 4)])
+        if len(series) > self.MAX_N:
+            del series[:len(series) - self.MAX_N]
+
+    def stats(self, symbol: str, current: float) -> dict | None:
+        series = [x for _, x in self.data.get(symbol, [])]
+        n = len(series)
+        if n < self.MIN_N:
+            return {"n": n, "ready": False, "label": f"baseline {n}/{self.MIN_N}"}
+        below = sum(1 for x in series if x < current)
+        pct = 100.0 * below / n
+        if pct <= 10:   label = "unusually call-heavy"
+        elif pct >= 90: label = "unusually put-heavy"
+        else:           label = "within its normal band"
+        return {"n": n, "ready": True, "percentile": round(pct, 1),
+                "median": round(st.median(series), 3),
+                "low": round(min(series), 3), "high": round(max(series), 3),
+                "label": label}
+
+    def summary(self) -> str:
+        if not self.data:
+            return "empty"
+        parts = [f"{s}:{len(v)}" for s, v in sorted(self.data.items())]
+        ready = sum(1 for v in self.data.values() if len(v) >= self.MIN_N)
+        return f"{' '.join(parts)}  ({ready}/{len(self.data)} usable)"
+
+    def save(self) -> None:
+        try:
+            os.makedirs(os.path.dirname(self.path), exist_ok=True)
+            json.dump(self.data, open(self.path, "w"), indent=0, sort_keys=True)
+        except OSError as e:
+            print(f"  ! baseline save failed: {e}", file=sys.stderr)
+
+
 class AlphaVantage:
     """Options put/call ratios. Free tier: 25 calls/day — spend them carefully."""
     BASE = "https://www.alphavantage.co/query"
 
+    # The free tier enforces TWO separate limits and both fail with the SAME
+    # message: a burst ceiling of ~1 request/second, and the 25/day cap.
+    # Treating a burst rejection as "daily cap hit" zeroes the budget and kills
+    # the rest of the run — so space the calls out, and if one still bounces,
+    # pause and retry exactly once before concluding the day is really spent.
+    MIN_GAP = 1.5          # seconds between consecutive calls
+    BURST_BACKOFF = 20     # seconds to wait before the single retry
+
     def __init__(self, key: str, budget: int = 25):
         self.key = key
         self.remaining = budget
+        self._last = 0.0
+
+    def _spaced_get(self, symbol: str):
+        gap = time.time() - self._last
+        if gap < self.MIN_GAP:
+            time.sleep(self.MIN_GAP - gap)
+        q = urllib.parse.urlencode({"function": "REALTIME_PUT_CALL_RATIO",
+                                    "symbol": symbol, "apikey": self.key})
+        d = _get(f"{self.BASE}?{q}")
+        self._last = time.time()
+        return d
+
+    @staticmethod
+    def _rate_limited(d: dict) -> bool:
+        if "Information" in d or "Note" in d:
+            return True
+        e = d.get("error")
+        return isinstance(e, dict) and e.get("type") == "rate_limit"
 
     def put_call(self, symbol: str) -> tuple[float | None, list, str | None]:
         """Returns (full_chain_ratio, by_expiry, error)."""
@@ -115,14 +205,20 @@ class AlphaVantage:
         if self.remaining <= 0:
             return None, [], "daily 25-call budget exhausted"
         self.remaining -= 1
-        q = urllib.parse.urlencode({"function": "REALTIME_PUT_CALL_RATIO",
-                                    "symbol": symbol, "apikey": self.key})
-        d = _get(f"{self.BASE}?{q}")
+        d = self._spaced_get(symbol)
         if not d:
             return None, [], "request failed"
-        if "Information" in d or "Note" in d:
-            self.remaining = 0
-            return None, [], "rate limit reached"
+        if self._rate_limited(d):
+            # Burst or daily? Back off and retry once to tell them apart.
+            print(f"  … {symbol} rate-limited; backing off {self.BURST_BACKOFF}s for one retry")
+            time.sleep(self.BURST_BACKOFF)
+            self.remaining -= 1
+            d = self._spaced_get(symbol)
+            if not d:
+                return None, [], "request failed after backoff"
+            if self._rate_limited(d):
+                self.remaining = 0
+                return None, [], "daily 25-call cap reached"
         if isinstance(d.get("error"), dict):
             self.remaining = 0
             return None, [], d["error"].get("message", "error")[:80]
@@ -497,7 +593,9 @@ def main() -> int:
         return 1
 
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    day_stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     td, av = TwelveData(TD_KEY), AlphaVantage(AV_KEY)
+    baseline = PutCallBaseline(os.path.join(DOCS, "pcr_history.json"))
     rows, notes = [], []
 
     for sym in TICKERS:
@@ -513,8 +611,18 @@ def main() -> int:
         pcr, _exp, err = av.put_call(sym)
         if err:
             notes.append(f"{sym}: put/call missing ({err}).")
-        rows.append(compute(sym, q, s, pcr, err))
-        print(f"    {rows[-1]['close']:,.2f}  {rows[-1]['day_pct']:+.2f}%  {rows[-1]['trend']}")
+        r = compute(sym, q, s, pcr, err)
+        # Grow the baseline. A raw put/call number means nothing without the
+        # ticker's own distribution behind it — 1.05 is "low" for SPY and "high"
+        # for NVDA. Every run appends one point; the percentile becomes usable
+        # on its own after a few months, at zero extra API cost.
+        if pcr is not None:
+            baseline.append(sym, day_stamp, pcr)
+            r["pcr_stats"] = baseline.stats(sym, pcr)
+        rows.append(r)
+        pstat = r.get("pcr_stats") or {}
+        print(f"    {r['close']:,.2f}  {r['day_pct']:+.2f}%  {r['trend']}"
+              + (f"  p/c {pcr:.2f} ({pstat['label']})" if pstat else ""))
 
     if not rows:
         print("FATAL: no tickers resolved", file=sys.stderr)
@@ -530,6 +638,8 @@ def main() -> int:
     json.dump([{k: v for k, v in r.items() if k not in ("closes", "fib")} for r in rows],
               open(os.path.join(DOCS, "latest.json"), "w"), indent=1, default=str)
     print(f"· wrote docs/index.html ({len(html):,} bytes) and archive/{day}-{SLOT}.html")
+    baseline.save()
+    print(f"· put/call baseline: {baseline.summary()}")
 
     url = os.environ.get("PAGES_URL")
     e_html, e_text = render_email(rows, stamp, notes, url)
