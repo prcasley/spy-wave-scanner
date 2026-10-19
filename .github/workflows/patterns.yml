@@ -34,6 +34,7 @@ jobs:
           python scan.py --out output
           mkdir -p ../docs/patterns
           cp output/report.html ../docs/patterns/index.html
+          cp output/guide.html ../docs/patterns/guide.html
           cp output/pattern_stats.csv ../docs/patterns/
           [ -f output/live_signals.csv ] && cp output/live_signals.csv ../docs/patterns/ || true
       - name: Commit report

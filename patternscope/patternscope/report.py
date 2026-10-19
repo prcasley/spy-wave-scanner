@@ -87,6 +87,7 @@ details{margin-top:30px;color:var(--sub)}summary{cursor:pointer;color:var(--text
 </style></head><body><div class="wrap">
 <h1>Pattern<span>Scope</span></h1>
 <div class="sub" id="meta"></div>
+<a href="guide.html" style="display:inline-block;margin-top:10px;background:#8b5cf6;color:#fff;padding:8px 14px;border-radius:999px;font-weight:600;text-decoration:none">📘 Pattern Guide — what every pattern means</a>
 <div id="demo"></div>
 <div class="kpis" id="kpis"></div>
 
@@ -133,6 +134,7 @@ const D=/*__DATA__*/null;
 const $=s=>document.querySelector(s);
 const fmt=(v,d=2)=>v==null||Number.isNaN(v)?'–':(+v).toFixed(d);
 const sgn=v=>v==null?'':(v>0?'pos':(v<0?'neg':''));
+const gl=n=>`guide.html#${n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}`;
 const mid=tf=>{const h=D.horizons[tf]||[];return h[Math.floor(h.length/2)]};
 $('#meta').textContent=`Generated ${D.generated} · ${D.n_trades.toLocaleString()} historical detections · ${D.n_patterns} pattern types`;
 if(D.demo)$('#demo').innerHTML='<div class="banner">DEMO DATA — synthetic prices used to test the engine. These numbers say nothing about real markets.</div>';
@@ -152,7 +154,7 @@ const order={A:0,B:1,C:2,'low-n':3,F:4};
 const fr=D.fresh.map(f=>({...f,own:SM[key(f.ticker,f.tf,f.pattern)],all:SM[key('ALL',f.tf,f.pattern)]}))
  .sort((a,b)=>(order[(a.all||{}).grade]??5)-(order[(b.all||{}).grade]??5)||((b.all||{}).expectancy_R||-9)-((a.all||{}).expectancy_R||-9));
 $('#fresh').innerHTML=fr.length?fr.map(f=>{const L=f.direction===1;const a=f.all||{};return `<div class="card">
- <div class="top"><div class="name">${f.ticker} · ${f.pattern}</div><span class="badge ${L?'L':'S'}">${L?'LONG':'SHORT'}</span></div>
+ <div class="top"><div class="name">${f.ticker} · <a href="${gl(f.pattern)}" style="color:#fff">${f.pattern}</a></div><span class="badge ${L?'L':'S'}">${L?'LONG':'SHORT'}</span></div>
  <div class="sub">${f.tf} · confirmed ${f.signal_time} · ${f.outcome==='pending'?'entry next open':'in progress: '+f.outcome}</div>
  <div class="grid2 mono"><span>close</span><div>${fmt(f.signal_close)}</div><span>stop</span><div>${fmt(f.stop)}</div><span>target</span><div>${fmt(f.target)}</div>
  <span>usually takes</span><div>${a.bars_to_target_med!=null?fmt(a.bars_to_target_med,0)+' bars to target':'–'}</div></div>
@@ -167,7 +169,7 @@ function renderLB(){const tk=$('#fTk').value,tf=$('#fTf').value,cat=$('#fCat').v
  let rows=S.filter(r=>r.ticker===tk&&r.tf===tf&&(!cat||r.category===cat)&&(!dir||r.direction===dir)&&r.n>=nmin&&r.pattern.toLowerCase().includes(q));
  rows.sort((a,b)=>{let x=val(a,sortK),y=val(b,sortK);if(sortK==='grade'){x=order[x];y=order[y]}if(x==null)return 1;if(y==null)return -1;return(typeof x==='string'?x.localeCompare(y):x-y)*sortD});
  $('#lb tbody').innerHTML=rows.length?rows.map(r=>'<tr>'+cols.map(([k])=>{const v=val(r,k);
-  if(k==='pattern')return`<td>${v}</td>`;if(k==='grade')return`<td>${gradeBadge(v)}</td>`;
+  if(k==='pattern')return`<td><a href="${gl(v)}" style="color:#fff">${v}</a></td>`;if(k==='grade')return`<td>${gradeBadge(v)}</td>`;
   if(k==='direction')return`<td><span class="badge ${v==='LONG'?'L':'S'}">${v}</span></td>`;
   const dec=['n','formation_bars_med','bars_to_target_med'].includes(k)?0:(k.endsWith('pct')||k==='EDGE'||k==='HIT'?1:2);
   const cl=['expectancy_R','EDGE','exp_R_first_half','exp_R_second_half'].includes(k)?sgn(v):'';
@@ -226,7 +228,7 @@ function drawChart(){const c=CH[$('#cTk').value+'|'+$('#cTf').value];const el=$(
  chart.timeScale().fitContent();
  $('#cList').innerHTML=ms.slice().reverse().slice(0,40).map((m,i)=>`<div class="card" data-i="${i}" style="cursor:pointer;padding:10px">
   <div class="top"><div style="font-weight:600">${m.fresh?'● ':''}${m.p}</div><span class="badge ${m.d>0?'L':'S'}">${m.d>0?'LONG':'SHORT'}</span></div>
-  <div class="sub">${new Date(m.t*1000).toISOString().slice(0,c.tf==='1h'?16:10).replace('T',' ')} · ${m.st?gradeBadge(m.st.grade)+' '+fmt(m.st.expectancy_R)+'R':'no stats'}</div></div>`).join('')||'<div class="empty">No patterns of this kind in view.</div>';
+  <a href="${gl(m.p)}" onclick="event.stopPropagation()" class="sub" style="color:#c4b5fd">what is this? →</a><div class="sub">${new Date(m.t*1000).toISOString().slice(0,c.tf==='1h'?16:10).replace('T',' ')} · ${m.st?gradeBadge(m.st.grade)+' '+fmt(m.st.expectancy_R)+'R':'no stats'}</div></div>`).join('')||'<div class="empty">No patterns of this kind in view.</div>';
  const rev=ms.slice().reverse().slice(0,40);
  document.querySelectorAll('#cList .card').forEach(card=>card.onclick=()=>{const m=rev[+card.dataset.i];lines.forEach(l=>cs.removePriceLine(l));
   lines=[cs.createPriceLine({price:m.stop,color:'#ef4444',lineWidth:1,lineStyle:2,title:'stop'}),cs.createPriceLine({price:m.tgt,color:'#22c55e',lineWidth:1,lineStyle:2,title:'target'})];

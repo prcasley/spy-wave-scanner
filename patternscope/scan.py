@@ -15,7 +15,7 @@ import os
 import sys
 import time
 
-from patternscope import report
+from patternscope import guide, report
 from patternscope.config import TIMEFRAMES, WATCHLIST
 from patternscope.data import load_csv, load_dividends, load_yahoo, synthetic
 from patternscope.pipeline import analyze, combine
@@ -69,6 +69,9 @@ def main(argv=None):
     path = os.path.join(a.out, "report.html")
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
+    from datetime import datetime
+    with open(os.path.join(a.out, "guide.html"), "w", encoding="utf-8") as f:
+        f.write(guide.build(res["stats"], datetime.now().strftime("%Y-%m-%d")))
     print(f"\nDone in {time.time() - t0:.0f}s -> {path}")
     top = res["stats"]
     top = top[(top.ticker == "ALL") & top.grade.isin(["A", "B"])]

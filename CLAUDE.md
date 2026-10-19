@@ -57,7 +57,8 @@ spy-wave-scanner/
 ├── patternscope/                      # Pattern recognition + backtest engine (Yahoo Finance via yfinance — user-approved)
 │   ├── scan.py                        # CLI: scan watchlist, backtest every detection, write report
 │   ├── README.md / requirements.txt
-│   └── patternscope/                  # core, candles (40), chart (36), setups (35), evaluate, pipeline, report, data, config
+│   └── patternscope/                  # core, candles (40), chart (36), setups (35), evaluate, pipeline, report, data, config,
+│                                      # guide.py + guide_content.py (visual Pattern Guide -> docs/patterns/guide.html)
 │
 ├── scripts/
 │   ├── run_scanner.py         [ 91L]  # Main entry point / CLI orchestrator
