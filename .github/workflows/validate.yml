@@ -1,0 +1,56 @@
+name: PatternScope validation
+
+on:
+  schedule:
+    - cron: '17 11 * * 0'      # Sundays ~7am ET — heavy run (S&P 500 universe)
+  push:
+    branches: [main]
+    paths: ['patternscope/patternscope/validation.py', 'patternscope/validate.py', '.github/workflows/validate.yml']
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Random subset of S&P names (0 = all ~500)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: patternscope-validate
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r patternscope/requirements.txt
+      - name: Validate on the S&P 500
+        working-directory: patternscope
+        run: python validate.py --out output --limit ${{ inputs.limit || '0' }}
+      - name: Publish tables + pages
+        run: |
+          mkdir -p docs/patterns/validation
+          cp patternscope/output/validation/*.csv docs/patterns/validation/
+          cp patternscope/output/report.html docs/patterns/index.html
+          cp patternscope/output/guide.html docs/patterns/guide.html
+          git config user.name  "patternscope bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/patterns
+          if ! git diff --staged --quiet; then
+            git commit -m "validation: $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main && git push
+          fi
+      - name: Upload Excel to the 'patternscope-latest' release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view patternscope-latest >/dev/null 2>&1 || gh release create patternscope-latest \
+            --title "PatternScope — latest data" --notes "Auto-updated workbook. Download PatternScope.xlsx." --latest=false
+          gh release upload patternscope-latest patternscope/output/PatternScope.xlsx --clobber

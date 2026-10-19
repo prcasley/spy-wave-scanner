@@ -55,10 +55,13 @@ spy-wave-scanner/
 │   └── dashboard.py           [641L]  # Streamlit UI — dark-themed chart, wave labels, fib lines, RSI/MACD
 │
 ├── patternscope/                      # Pattern recognition + backtest engine (Yahoo Finance via yfinance — user-approved)
-│   ├── scan.py                        # CLI: scan watchlist, backtest every detection, write report
+│   ├── scan.py                        # CLI: scan watchlist, backtest every detection, write report + PatternScope.xlsx
+│   ├── validate.py                    # CLI: research validation on the S&P 500 (survivorship, out-of-sample, costs, BH significance)
+│   ├── universe_sp500.csv             # Fixed S&P 500 constituent list (source: datasets/s-and-p-500-companies)
 │   ├── README.md / requirements.txt
 │   └── patternscope/                  # core, candles (40), chart (36), setups (35), evaluate, pipeline, report, data, config,
-│                                      # guide.py + guide_content.py (visual Pattern Guide -> docs/patterns/guide.html)
+│                                      # guide.py + guide_content.py (visual Pattern Guide -> docs/patterns/guide.html),
+│                                      # validation.py (verdicts), excel.py (one workbook with every table)
 │
 ├── scripts/
 │   ├── run_scanner.py         [ 91L]  # Main entry point / CLI orchestrator
@@ -91,7 +94,8 @@ spy-wave-scanner/
 └── .github/
     └── workflows/
         ├── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy)
-        ├── patterns.yml               # GitHub Actions: PatternScope once per weekday after close -> docs/patterns/, deploy Pages
+        ├── patterns.yml               # GitHub Actions: PatternScope once per weekday after close -> docs/patterns/, deploy Pages, Excel -> release
+        ├── validate.yml               # GitHub Actions: weekly S&P 500 validation -> docs/patterns/validation/, Excel -> release
         └── dashboard.yml              # GitHub Actions: regenerate docs/ twice each weekday, commit, deploy Pages
 ```
 

@@ -15,7 +15,7 @@ import os
 import sys
 import time
 
-from patternscope import guide, report
+from patternscope import excel, guide, report
 from patternscope.config import TIMEFRAMES, WATCHLIST
 from patternscope.data import load_csv, load_dividends, load_yahoo, synthetic
 from patternscope.pipeline import analyze, combine
@@ -30,6 +30,8 @@ def main(argv=None):
     ap.add_argument("--demo", action="store_true", help="synthetic prices to test the engine offline")
     ap.add_argument("--refresh", action="store_true", help="ignore the local data cache")
     ap.add_argument("--out", default="output")
+    ap.add_argument("--validation", default="../docs/patterns/validation/verdicts.csv",
+                    help="latest validation verdicts (from validate.py) to merge into the report/Excel")
     a = ap.parse_args(argv)
 
     os.makedirs(a.out, exist_ok=True)
@@ -65,13 +67,16 @@ def main(argv=None):
     res["trades"].to_csv(os.path.join(a.out, "all_detections.csv"), index=False)
     if len(res["fresh"]):
         res["fresh"].to_csv(os.path.join(a.out, "live_signals.csv"), index=False)
-    html = report.build(res, TIMEFRAMES, demo=a.demo)
+    import pandas as pd
+    vt = pd.read_csv(a.validation) if (a.validation and os.path.exists(a.validation) and not a.demo) else None
+    html = report.build(res, TIMEFRAMES, demo=a.demo, verdicts=vt)
     path = os.path.join(a.out, "report.html")
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
     from datetime import datetime
     with open(os.path.join(a.out, "guide.html"), "w", encoding="utf-8") as f:
-        f.write(guide.build(res["stats"], datetime.now().strftime("%Y-%m-%d")))
+        f.write(guide.build(res["stats"], datetime.now().strftime("%Y-%m-%d"), verdicts=vt))
+    excel.build(os.path.join(a.out, "PatternScope.xlsx"), res, vt)
     print(f"\nDone in {time.time() - t0:.0f}s -> {path}")
     top = res["stats"]
     top = top[(top.ticker == "ALL") & top.grade.isin(["A", "B"])]

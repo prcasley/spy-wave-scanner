@@ -29,3 +29,17 @@ def test_no_material_lookahead():
     trunc = _sigs(df.iloc[:1000], "1d")
     missing = [s for s in past if s not in trunc]
     assert len(missing) <= 0.01 * len(past)
+
+
+def test_validation_and_excel(tmp_path):
+    from patternscope.validation import verdicts
+
+    from patternscope import excel
+
+    res = combine([analyze(synthetic(tf, 1500, seed=4), "W", tf, TIMEFRAMES[tf]) for tf in TIMEFRAMES], TIMEFRAMES)
+    uni = analyze(synthetic("1d", 2500, seed=9), "U", "1d", TIMEFRAMES["1d"])["trades"]
+    tbl = verdicts(res["trades"], uni, res["stats"])
+    assert {"verdict", "uni_R_net", "oos_R_net"} <= set(tbl.columns)
+    out = tmp_path / "t.xlsx"
+    excel.build(str(out), res, tbl)
+    assert out.stat().st_size > 10_000

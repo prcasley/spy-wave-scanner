@@ -13,7 +13,7 @@ def slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
-def build(stats: pd.DataFrame, generated: str) -> str:
+def build(stats: pd.DataFrame, generated: str, verdicts=None) -> str:
     st = {}
     if stats is not None and len(stats):
         pooled = stats[stats.ticker == "ALL"]
@@ -21,9 +21,13 @@ def build(stats: pd.DataFrame, generated: str) -> str:
             st.setdefault(r.pattern, {})[r.tf] = dict(n=int(r.n), win=float(r.target_pct), R=float(r.expectancy_R),
                                                        g=r.grade, bars=None if pd.isna(r.bars_to_target_med)
                                                        else float(r.bars_to_target_med))
+    vd = {}
+    if verdicts is not None and len(verdicts):
+        for r in verdicts.itertuples():
+            vd.setdefault(r.pattern, {})[r.tf] = r.verdict
     for g in G:
         g["anchors"] = [slug(n) for n in g["bull"] + g["bear"]]
-    payload = dict(guide=G, stats=st, generated=generated)
+    payload = dict(guide=G, stats=st, generated=generated, verdicts=vd)
     return TEMPLATE.replace("/*__DATA__*/null", json.dumps(payload))
 
 
@@ -114,7 +118,8 @@ document.getElementById('candleIntro').outerHTML=`<svg viewBox="0 0 320 130">
  ${txt(252,38,'open')}${txt(252,94,'close')}</svg>`;
 const ORD={A:0,B:1,C:2,'low-n':3,F:4};
 function best(names){let b=null;names.forEach(n=>Object.values(D.stats[n]||{}).forEach(s=>{if(s.n>=20&&(!b||ORD[s.g]<ORD[b.g]||(s.g===b.g&&s.R>b.R)))b={...s,name:n}}));return b}
-function chip(s){if(!s)return'<span class="dim">–</span>';return `<span class="g g${s.g}">${s.g}</span><br><span class="mono">${s.win.toFixed(0)}% · ${s.R>=0?'+':''}${s.R.toFixed(2)}R</span><br><span class="dim" style="font-size:11.5px">n=${s.n}</span>`}
+const VS={"Confirmed":"✅ confirmed","Promising":"🔵 promising","Watchlist only":"⚠️ your picks only","Faded out-of-sample":"📉 faded","Costs kill it":"💸 costs","No edge":"✖ no edge","Too few trades":""};
+function chip(s,v){if(!s)return'<span class="dim">–</span>';return `<span class="g g${s.g}">${s.g}</span><br><span class="mono">${s.win.toFixed(0)}% · ${s.R>=0?'+':''}${s.R.toFixed(2)}R</span><br><span class="dim" style="font-size:11.5px">n=${s.n}</span>${v&&VS[v]?`<br><span style="font-size:11.5px">${VS[v]}</span>`:''}`}
 function card(g){const rows=[...g.bull.map(n=>[n,'▲','#22c55e']),...g.bear.map(n=>[n,'▼','#ef4444'])];
  const b=best([...g.bull,...g.bear]);
  const verdict=b?(ORD[b.g]<=1?`✅ Works best: <b>${b.name}</b> — ${b.win.toFixed(0)}% win, ${b.R>=0?'+':''}${b.R.toFixed(2)}R per trade`:ORD[b.g]===2?'⚠️ Barely profitable on your stocks — not worth trading alone':'❌ Has lost money on your stocks — don\'t trade it'):'<span class="dim">Not enough history yet</span>';
@@ -127,7 +132,7 @@ function card(g){const rows=[...g.bull.map(n=>[n,'▲','#22c55e']),...g.bear.map
  ${g.flip?`<div class="flip">${g.flip}</div>`:''}
  <div class="verdict">${verdict}</div>
  <table><tr><th>Your stocks</th><th>Hourly<br><span class="dim" style="font-weight:400">day trade</span></th><th>Daily<br><span class="dim" style="font-weight:400">swing</span></th><th>Weekly<br><span class="dim" style="font-weight:400">hold</span></th></tr>
- ${rows.map(([n,a,c])=>`<tr><td><span style="color:${c}">${a}</span> ${n}</td>${['1h','1d','1wk'].map(tf=>`<td>${chip((D.stats[n]||{})[tf])}</td>`).join('')}</tr>`).join('')}</table></div>`}
+ ${rows.map(([n,a,c])=>`<tr><td><span style="color:${c}">${a}</span> ${n}</td>${['1h','1d','1wk'].map(tf=>`<td>${chip((D.stats[n]||{})[tf],(D.verdicts[n]||{})[tf])}</td>`).join('')}</tr>`).join('')}</table></div>`}
 let F='',onlyW=false;
 function render(){const q=document.getElementById('q').value.toLowerCase();
  document.getElementById('grid').innerHTML=D.guide.filter(g=>(!F||g.family===F)&&(!q||(g.title+g.bull.join()+g.bear.join()+g.what).toLowerCase().includes(q))).map(card).join('');

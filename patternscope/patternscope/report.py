@@ -25,7 +25,7 @@ def _records(df: pd.DataFrame, cols=None):
     return out
 
 
-def build(res: dict, tf_cfg: dict, demo: bool = False) -> str:
+def build(res: dict, tf_cfg: dict, demo: bool = False, verdicts=None) -> str:
     stats = res["stats"]
     fresh = res["fresh"]
     payload = dict(
@@ -39,6 +39,9 @@ def build(res: dict, tf_cfg: dict, demo: bool = False) -> str:
         coverage=res["coverage"],
         charts=res.get("charts", []),
         snapshots=json.loads(json.dumps(res.get("snapshots", []), default=float)),
+        verdicts=_records(verdicts, ["tf", "pattern", "direction", "verdict", "watch_grade", "watch_R_net", "uni_n",
+                                     "uni_win", "uni_R_net", "is_R_net", "oos_n", "oos_R_net", "uni_p", "uni_sig"])
+        if verdicts is not None else [],
         n_trades=int(len(res["trades"])),
         n_patterns=int(res["trades"].pattern.nunique()) if len(res["trades"]) else 0,
     )
@@ -88,6 +91,7 @@ details{margin-top:30px;color:var(--sub)}summary{cursor:pointer;color:var(--text
 <h1>Pattern<span>Scope</span></h1>
 <div class="sub" id="meta"></div>
 <a href="guide.html" style="display:inline-block;margin-top:10px;background:#8b5cf6;color:#fff;padding:8px 14px;border-radius:999px;font-weight:600;text-decoration:none">📘 Pattern Guide — what every pattern means</a>
+<a href="https://github.com/prcasley/spy-wave-scanner/releases/download/patternscope-latest/PatternScope.xlsx" style="display:inline-block;margin:10px 0 0 6px;background:#16a34a;color:#fff;padding:8px 14px;border-radius:999px;font-weight:600;text-decoration:none">⬇ Excel — all the data</a>
 <div id="demo"></div>
 <div class="kpis" id="kpis"></div>
 
@@ -107,6 +111,8 @@ details{margin-top:30px;color:var(--sub)}summary{cursor:pointer;color:var(--text
 <select id="cGr"><option value="AB">Grade A/B only</option><option value="ABC">A/B/C</option><option value="">All grades</option></select></div>
 <div id="chart" style="height:440px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)"></div>
 <div class="cards" id="cList" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))"></div>
+
+<div id="valwrap"></div>
 
 <h2>Pattern leaderboard</h2>
 <div class="sub">Win = target hit before stop. Expectancy in R (1R = the planned risk). Edge = how much more often price moved the pattern's way than from a random bar.</div>
@@ -234,5 +240,19 @@ function drawChart(){const c=CH[$('#cTk').value+'|'+$('#cTf').value];const el=$(
   lines=[cs.createPriceLine({price:m.stop,color:'#ef4444',lineWidth:1,lineStyle:2,title:'stop'}),cs.createPriceLine({price:m.tgt,color:'#22c55e',lineWidth:1,lineStyle:2,title:'target'})];
   const T=c.candles.map(x=>x[0]);const ie=T.indexOf(m.t),is=T.indexOf(m.ts);chart.timeScale().setVisibleLogicalRange({from:Math.min(is<0?ie:is,ie)-40,to:ie+25});el.scrollIntoView({behavior:'smooth',block:'center'})})}
 ['#cTk','#cTf','#cCat','#cGr'].forEach(s=>$(s).onchange=drawChart);drawChart();
+
+// ---------- validation
+const VH={"Confirmed":"Works on ~500 stocks, after costs, in recent years, and passed the luck test","Promising":"Works on ~500 stocks after costs and in recent years, not yet statistically proven",
+"Watchlist only":"Only looked good on your 11 picks — probably hindsight","Faded out-of-sample":"Worked in older data, stopped working lately","Costs kill it":"Profit disappears after trading costs","No edge":"No better than random on the broad market","Too few trades":"Not enough examples"};
+const VC={"Confirmed":"#16a34a","Promising":"#2563eb","Watchlist only":"#a16207","Faded out-of-sample":"#9a3412","Costs kill it":"#7f1d1d","No edge":"#3f3f46","Too few trades":"#27272a"};
+if(D.verdicts.length){const cnt={};D.verdicts.forEach(v=>cnt[v.verdict]=(cnt[v.verdict]||0)+1);
+ const top=D.verdicts.filter(v=>v.verdict==='Confirmed'||v.verdict==='Promising');
+ $('#valwrap').innerHTML=`<h2>Validation — is the edge real?</h2><div class="sub">Every pattern re-tested on the S&P 500 (not just your picks), split into older vs. recent years, after trading costs, with a luck test.</div>
+ <div class="kpis">${Object.keys(VH).filter(k=>cnt[k]).map(k=>`<div class="kpi" style="border-left:4px solid ${VC[k]}"><b>${cnt[k]}</b><span>${k}<br>${VH[k]}</span></div>`).join('')}</div>
+ <div class="tbl" style="margin-top:12px"><table style="min-width:760px"><thead><tr><th>Pattern</th><th>TF</th><th>Dir</th><th>Verdict</th><th>S&P trades</th><th>S&P win %</th><th>Net R (all)</th><th>Net R (older)</th><th>Net R (recent)</th><th>Your grade</th></tr></thead><tbody>
+ ${(top.length?top:D.verdicts.slice(0,25)).map(v=>`<tr><td><a href="${gl(v.pattern)}" style="color:#fff">${v.pattern}</a></td><td>${v.tf}</td><td><span class="badge ${v.direction==='LONG'?'L':'S'}">${v.direction}</span></td>
+ <td><span class="g" style="background:${VC[v.verdict]}">${v.verdict}</span></td><td class="mono">${(v.uni_n||0).toLocaleString()}</td><td class="mono">${fmt(v.uni_win,1)}</td>
+ <td class="mono ${sgn(v.uni_R_net)}">${fmt(v.uni_R_net)}</td><td class="mono ${sgn(v.is_R_net)}">${fmt(v.is_R_net)}</td><td class="mono ${sgn(v.oos_R_net)}">${fmt(v.oos_R_net)}</td><td>${gradeBadge(v.watch_grade)}</td></tr>`).join('')}</tbody></table></div>
+ <div class="sub" style="margin-top:6px">Showing ${top.length?'Confirmed + Promising':'top 25'} of ${D.verdicts.length}. Full table in the Excel file.</div>`}
 $('#cov').textContent='Data: '+D.coverage.map(c=>`${c.ticker} ${c.tf} ${c.first.slice(0,10)}→${c.last.slice(0,10)} (${c.bars} bars)`).join(' · ');
 </script></body></html>"""

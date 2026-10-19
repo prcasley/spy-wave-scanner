@@ -26,3 +26,9 @@ YF = {
     "1d": dict(interval="1d", period="max"),
     "1wk": dict(interval="1wk", period="max"),
 }
+
+# ---- validation settings
+# Round-trip trading cost per side in basis points (commission + slippage). 3 bps = 0.03%.
+COST_BPS = {"1h": 5, "1d": 3, "1wk": 3}
+# Out-of-sample split: grade on signals before this date, test on signals after it.
+OOS_SPLIT = {"1h": "2025-05-01", "1d": "2019-01-01", "1wk": "2016-01-01"}
