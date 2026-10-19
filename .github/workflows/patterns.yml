@@ -30,22 +30,24 @@ jobs:
       - run: pip install -r patternscope/requirements.txt
       - name: Scan watchlist (Yahoo Finance)
         working-directory: patternscope
-        run: |
-          python scan.py --out output
-          mkdir -p ../docs/patterns
-          cp output/report.html ../docs/patterns/index.html
-          cp output/guide.html ../docs/patterns/guide.html
-          cp output/pattern_stats.csv ../docs/patterns/
-          [ -f output/live_signals.csv ] && cp output/live_signals.csv ../docs/patterns/ || true
+        run: python scan.py --out output
       - name: Commit report
         run: |
           git config user.name  "patternscope bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/patterns
-          if git diff --staged --quiet; then echo "no change"; else
-            git commit -m "patterns: $(date -u +%Y-%m-%d\ %H:%M)"
-            git pull --rebase origin main && git push
-          fi
+          for i in 1 2 3 4; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            mkdir -p docs/patterns
+            cp patternscope/output/report.html docs/patterns/index.html
+            cp patternscope/output/guide.html docs/patterns/guide.html
+            cp patternscope/output/pattern_stats.csv docs/patterns/
+            [ -f patternscope/output/live_signals.csv ] && cp patternscope/output/live_signals.csv docs/patterns/ || true
+            git add docs/patterns
+            git diff --staged --quiet && break
+            git commit -q -m "patterns: $(date -u +%Y-%m-%d\ %H:%M)"
+            git push -q origin HEAD:main && break
+            sleep $((i * 15))
+          done
       - name: Upload Excel to the 'patternscope-latest' release
         env:
           GH_TOKEN: ${{ github.token }}
