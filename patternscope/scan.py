@@ -15,9 +15,9 @@ import os
 import sys
 import time
 
-from patternscope import cockpit, excel, guide, report
+from patternscope import cockpit, excel, feed, guide, report
 from patternscope.config import CRYPTO, TIMEFRAMES, WATCHLIST, is_crypto
-from patternscope.data import load_csv, load_dividends, load_yahoo, synthetic
+from patternscope.data import load_csv, load_dividends, load_prices, synthetic
 from patternscope.pipeline import analyze, combine
 
 
@@ -43,7 +43,7 @@ def main(argv=None):
     elif a.csv:
         jobs = [(a.name, a.tf[0], lambda: load_csv(a.csv))]
     else:
-        jobs = [(tk, tf, lambda tk=tk, tf=tf: load_yahoo(tk, tf, refresh=a.refresh)) for tk in a.tickers for tf in a.tf]
+        jobs = [(tk, tf, lambda tk=tk, tf=tf: load_prices(tk, tf, refresh=a.refresh)) for tk in a.tickers for tf in a.tf]
 
     for tk, tf, loader in jobs:
         try:
@@ -78,6 +78,7 @@ def main(argv=None):
         f.write(guide.build(res["stats"], datetime.now().strftime("%Y-%m-%d"), verdicts=vt))
     with open(os.path.join(a.out, "cockpit.html"), "w", encoding="utf-8") as f:
         f.write(cockpit.build(res, TIMEFRAMES, demo=a.demo, verdicts=vt))
+    feed.write(os.path.join(a.out, "latest.json"), res, vt)
     excel.build(os.path.join(a.out, "PatternScope.xlsx"), res, vt)
     print(f"\nDone in {time.time() - t0:.0f}s -> {path}")
     top = res["stats"]

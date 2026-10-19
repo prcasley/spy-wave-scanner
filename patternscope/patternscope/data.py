@@ -24,6 +24,62 @@ def _clean(df: pd.DataFrame) -> pd.DataFrame:
     return df[~df.index.duplicated(keep="last")].sort_index()
 
 
+CCXT_TF = {"1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h", "1d": "1d"}
+CCXT_DAYS = {"1m": 3, "5m": 60, "15m": 60, "1h": 729, "1d": 4000}
+
+
+def load_ccxt(ticker: str, tf: str, exchange: str = "coinbase", days: int | None = None) -> pd.DataFrame:
+    """Crypto candles straight from an exchange's public API via CCXT (no account or key).
+    BTC-USD -> BTC/USD. Weekly bars are built from daily. Use a US-reachable exchange
+    (coinbase, kraken) — Binance blocks US IPs, including GitHub's runners."""
+    import ccxt  # lazily: only needed for crypto
+
+    ex = getattr(ccxt, exchange)({"enableRateLimit": True})
+    sym = ticker.upper().replace("-", "/")
+    base_tf = "1d" if tf == "1wk" else tf
+    tfx = CCXT_TF[base_tf]
+    step_ms = ex.parse_timeframe(tfx) * 1000
+    since = ex.milliseconds() - (days or CCXT_DAYS.get(base_tf, 730)) * 86_400_000
+    rows, guard = [], 0
+    while since < ex.milliseconds() and guard < 400:
+        batch = ex.fetch_ohlcv(sym, tfx, since=since, limit=300)
+        guard += 1
+        if not batch:
+            since += 300 * step_ms  # gap (e.g. before listing) — skip ahead
+            continue
+        rows += batch
+        nxt = batch[-1][0] + step_ms
+        if nxt <= since:
+            break
+        since = nxt
+    if not rows:
+        raise RuntimeError(f"CCXT {exchange} returned no candles for {sym} {tfx}")
+    df = pd.DataFrame(rows, columns=["ts", "open", "high", "low", "close", "volume"]).drop_duplicates("ts")
+    df.index = pd.DatetimeIndex(pd.to_datetime(df.pop("ts"), unit="ms", utc=True)).tz_convert("America/New_York")
+    df = _clean(df)
+    if tf == "1wk":
+        df = df.resample("W-SUN", label="left", closed="left").agg(
+            {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
+    return df
+
+
+def load_prices(ticker: str, tf: str, refresh: bool = False) -> pd.DataFrame:
+    """Crypto -> CCXT (exchange data, fresher) with Yahoo as fallback; everything else -> Yahoo."""
+    from .config import CRYPTO_SOURCE, is_crypto
+    if is_crypto(ticker) and CRYPTO_SOURCE.startswith("ccxt"):
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        path = os.path.join(CACHE_DIR, f"{ticker}_{tf}_ccxt.csv")
+        if not refresh and os.path.exists(path) and (time.time() - os.path.getmtime(path)) < 3600:
+            return load_csv(path)
+        try:
+            df = load_ccxt(ticker, tf, exchange=CRYPTO_SOURCE.split(":", 1)[1] if ":" in CRYPTO_SOURCE else "coinbase")
+            df.to_csv(path)
+            return df
+        except Exception as e:
+            print(f"  CCXT failed for {ticker} {tf} ({e}); falling back to Yahoo")
+    return load_yahoo(ticker, tf, refresh=refresh)
+
+
 def load_yahoo(ticker: str, tf: str, refresh: bool = False, max_age_hours: float = 6) -> pd.DataFrame:
     os.makedirs(CACHE_DIR, exist_ok=True)
     path = os.path.join(CACHE_DIR, f"{ticker.replace('^', '_')}_{tf}.csv")

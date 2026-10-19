@@ -51,3 +51,13 @@ def test_cockpit_renders():
     res = combine([analyze(synthetic("1d", 1500, seed=6), "X", "1d", TIMEFRAMES["1d"])], TIMEFRAMES)
     html = cockpit.build(res, TIMEFRAMES)
     assert "Flight display" in html and "/*__DATA__*/" not in html
+
+
+def test_feed_schema():
+    from patternscope import feed
+
+    res = combine([analyze(synthetic("1d", 1500, seed=8), "BTC-USD", "1d", TIMEFRAMES["1d"])], TIMEFRAMES)
+    d = feed.build(res)
+    assert d["schema_version"] == 1
+    for s in d["signals"]:
+        assert s["market"] == "crypto" and len(s["id"]) == 16 and s["entry_rule"] == "next bar open"

@@ -45,6 +45,7 @@ jobs:
             cp patternscope/output/cockpit.html docs/patterns/index.html
             cp patternscope/output/report.html docs/patterns/classic.html
             cp patternscope/output/guide.html docs/patterns/guide.html
+            cp patternscope/output/latest.json docs/patterns/latest.json
             git add docs/patterns
             git diff --staged --quiet && break
             git commit -q -m "validation: $(date -u +%Y-%m-%d)"

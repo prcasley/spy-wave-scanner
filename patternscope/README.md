@@ -36,3 +36,27 @@ Open `output/report.html`. CSVs: `pattern_stats.csv`, `live_signals.csv`, `all_d
 
 ## Automation
 `.github/workflows/scan.yml` runs once after the close on weekdays (manual run button too) and uploads the report as an artifact. No intraday or hourly runs.
+
+## Using PatternScope from another app (e.g. the local paper-trading simulator)
+
+**Option 1 — read the published feed (no code to install).**
+`https://prcasley.github.io/spy-wave-scanner/patterns/latest.json` is rebuilt every weekday after the close.
+Each signal has a stable `id` (de-duplicate on it), `entry_rule: "next bar open"`, `stop`, `target`,
+the pattern's historical `grade` / `hist_win_pct` / `hist_expectancy_R`, and the S&P 500 `verdict`.
+Schema is documented at the top of `patternscope/feed.py` (`schema_version` bumps on breaking changes).
+
+**Option 2 — run the detectors yourself on live candles (real-time).**
+```bash
+pip install "patternscope[data] @ git+https://github.com/prcasley/spy-wave-scanner#subdirectory=patternscope"
+```
+```python
+from patternscope.config import TIMEFRAMES
+from patternscope.data import load_ccxt          # crypto, straight from the exchange (no key)
+from patternscope.pipeline import analyze
+
+df = load_ccxt("BTC-USD", "1h", exchange="coinbase", days=120)
+out = analyze(df, "BTC-USD", "1h", TIMEFRAMES["1h"])
+live = out["fresh"]          # patterns that confirmed on the latest bars, with stop/target
+```
+Pair `live` with the grades in `latest.json` to decide which signals the simulator should take.
+GitHub Actions runs in batches, so for intraday freshness the simulator should run Option 2 on its own schedule.

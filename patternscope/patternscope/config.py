@@ -5,6 +5,10 @@ WATCHLIST = ["SPY", "QQQ", "NVDA", "TSLA", "MU", "GOOGL", "NBIS", "DELL", "BE", 
 CRYPTO = ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD"]
 
 
+# Crypto data source: "ccxt:<exchange>" (live exchange candles, no key) or "yahoo".
+CRYPTO_SOURCE = "ccxt:coinbase"
+
+
 def is_crypto(ticker: str) -> bool:
     return ticker.upper().endswith("-USD")
 

@@ -41,6 +41,7 @@ jobs:
             cp patternscope/output/cockpit.html docs/patterns/index.html
             cp patternscope/output/report.html docs/patterns/classic.html
             cp patternscope/output/guide.html docs/patterns/guide.html
+            cp patternscope/output/latest.json docs/patterns/latest.json
             cp patternscope/output/pattern_stats.csv docs/patterns/
             [ -f patternscope/output/live_signals.csv ] && cp patternscope/output/live_signals.csv docs/patterns/ || true
             git add docs/patterns
