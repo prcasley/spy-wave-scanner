@@ -36,7 +36,9 @@ def evaluate(ctx: Ctx, sigs: List[Signal], max_hold: int, horizons: List[int]) -
         risk = (entry - s.stop) * d
         reward = (s.target - entry) * d
         row["entry"] = entry
-        if not np.isfinite(risk) or risk <= 0 or reward <= 0:
+        a_ref = ctx.atr[min(s.end, n - 1)]
+        # a stop tighter than 0.2 ATR is noise-level; its R multiple would be meaningless
+        if not np.isfinite(risk) or risk < 0.2 * a_ref or reward <= 0:
             row["outcome"] = "invalid"
             rows.append(row)
             continue

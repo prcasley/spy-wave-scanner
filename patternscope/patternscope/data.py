@@ -101,7 +101,8 @@ def load_dividends(ticker: str, days: int = 120) -> dict:
         d = d[d.index >= d.index.max() - pd.Timedelta(days=days)]
         rows = [dict(date=str(i)[:10], amount=round(float(v), 4)) for i, v in d.items()][::-1]
         gaps = pd.Series(d.index).diff().dt.days.dropna()
-        freq = "weekly" if len(gaps) and gaps.median() <= 8 else "monthly" if len(gaps) and gaps.median() <= 35 else "other"
+        med = gaps.median() if len(gaps) else 999
+        freq = "weekly" if med <= 8 else "monthly" if med <= 35 else "quarterly" if med <= 100 else "other"
         return dict(name=name, last_date=rows[0]["date"], last_amount=rows[0]["amount"], frequency=freq,
                     recent=rows[:8], trailing_sum=round(float(d.sum()), 4))
     except Exception as e:  # never let dividends break the scan

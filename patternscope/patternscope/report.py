@@ -200,7 +200,7 @@ function renderCmp(){const rows=D.snapshots.map(r=>({...r,live:liveBy[r.ticker]|
 renderCmp();
 const dv=D.snapshots.filter(s=>s.dividends&&(s.dividends.last_amount!=null||s.dividends.name));
 $('#divs').innerHTML=dv.length?'<h2>Distributions</h2><div class="cards">'+dv.map(s=>{const d=s.dividends;
- const y=d.last_amount&&s.close?(d.frequency==='weekly'?52:d.frequency==='monthly'?12:0)*d.last_amount/s.close*100:null;
+ const y=d.last_amount&&s.close?(d.frequency==='weekly'?52:d.frequency==='monthly'?12:d.frequency==='quarterly'?4:0)*d.last_amount/s.close*100:null;
  return`<div class="card"><div class="top"><div class="name">${s.ticker}</div><span class="mono">${fmt(s.close)}</span></div>
  <div class="sub">${d.name||''}</div>${d.last_amount!=null?`<div class="grid2 mono"><span>latest</span><div>$${fmt(d.last_amount,4)} · ${d.last_date}</div>
  <span>pays</span><div>${d.frequency}</div><span>run-rate yield</span><div>${y?fmt(y,1)+'%':'–'}</div>
