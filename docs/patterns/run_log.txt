@@ -1,69 +1,68 @@
-  SPY    1h     5065 bars    6437 detections  2 live
-  SPY    1d     8487 bars   10609 detections  7 live
-  SPY    1wk    1760 bars    1722 detections  1 live
-  QQQ    1h     5066 bars    6405 detections  2 live
-  QQQ    1d     6945 bars    8397 detections  6 live
-  QQQ    1wk    1441 bars    1387 detections  2 live
-  NVDA   1h     5066 bars    6246 detections  4 live
-  NVDA   1d     6977 bars    8029 detections  5 live
-  NVDA   1wk    1448 bars    1410 detections  3 live
-  TSLA   1h     5066 bars    6297 detections  0 live
+  SPY    1h     5044 bars    6410 detections  2 live
+  SPY    1d     8487 bars   10607 detections  7 live
+  SPY    1wk    1760 bars    1726 detections  1 live
+  QQQ    1h     5047 bars    6382 detections  1 live
+  QQQ    1d     6945 bars    8390 detections  6 live
+  QQQ    1wk    1441 bars    1385 detections  2 live
+  NVDA   1h     5047 bars    6225 detections  4 live
+  NVDA   1d     6977 bars    8041 detections  5 live
+  NVDA   1wk    1448 bars    1412 detections  3 live
+  TSLA   1h     5047 bars    6275 detections  0 live
   TSLA   1d     4101 bars    4721 detections  6 live
   TSLA   1wk     851 bars     895 detections  3 live
-  MU     1h     5066 bars    6311 detections  3 live
-  MU     1d    10677 bars   12427 detections  4 live
-  MU     1wk    2212 bars    2098 detections  2 live
-  GOOGL  1h     5066 bars    6198 detections  3 live
-  GOOGL  1d     5576 bars    6380 detections  2 live
-  GOOGL  1wk    1157 bars    1109 detections  1 live
-  NBIS   1h     3464 bars    4382 detections  3 live
+  MU     1h     5050 bars    6294 detections  3 live
+  MU     1d    10677 bars   12386 detections  4 live
+  MU     1wk    2212 bars    2097 detections  2 live
+  GOOGL  1h     5048 bars    6168 detections  3 live
+  GOOGL  1d     5576 bars    6376 detections  2 live
+  GOOGL  1wk    1157 bars    1110 detections  1 live
+  NBIS   1h     3445 bars    4354 detections  3 live
   NBIS   1d      499 bars     561 detections  2 live
   skip NBIS 1wk: only 104 bars
-  DELL   1h     5065 bars    6220 detections  4 live
-  DELL   1d     2556 bars    2825 detections  5 live
+  DELL   1h     5046 bars    6211 detections  4 live
+  DELL   1d     2556 bars    2816 detections  5 live
   DELL   1wk     531 bars     476 detections  5 live
-  BE     1h     5062 bars    6446 detections  2 live
+  BE     1h     5043 bars    6426 detections  2 live
   BE     1d     2069 bars    2228 detections  4 live
   BE     1wk     430 bars     390 detections  6 live
-  CLSK   1h     5059 bars    6559 detections  2 live
+  CLSK   1h     5038 bars    6514 detections  2 live
   CLSK   1d     2492 bars    2631 detections  2 live
   CLSK   1wk     518 bars     480 detections  1 live
-  TSLW   1h     2407 bars    3294 detections  2 live
+  TSLW   1h     2388 bars    3268 detections  2 live
   TSLW   1d      418 bars     481 detections  6 live
   skip TSLW 1wk: only 87 bars
   BTC-USD 1h    17486 bars   19465 detections  5 live
   BTC-USD 1d     4000 bars    3928 detections  5 live
   BTC-USD 1wk     573 bars     520 detections  0 live
-  ETH-USD 1h    17486 bars   19024 detections  2 live
+  ETH-USD 1h    17486 bars   19025 detections  3 live
   ETH-USD 1d     3805 bars    3556 detections  0 live
   ETH-USD 1wk     545 bars     470 detections  0 live
   SOL-USD 1h    17486 bars   19017 detections  2 live
   SOL-USD 1d     1951 bars    1841 detections  0 live
   SOL-USD 1wk     280 bars     246 detections  0 live
-  XRP-USD 1h    17486 bars   19226 detections  3 live
+  XRP-USD 1h    17486 bars   19225 detections  2 live
   XRP-USD 1d     1889 bars    1759 detections  1 live
   XRP-USD 1wk     272 bars     263 detections  0 live
   DOGE-USD 1h    17486 bars   19109 detections  3 live
   DOGE-USD 1d     1965 bars    1840 detections  0 live
   DOGE-USD 1wk     282 bars     235 detections  0 live
-Traceback (most recent call last):
-  File "/home/runner/work/spy-wave-scanner/spy-wave-scanner/patternscope/scan.py", line 93, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/home/runner/work/spy-wave-scanner/spy-wave-scanner/patternscope/scan.py", line 65, in main
-    res = combine(results, TIMEFRAMES)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/spy-wave-scanner/spy-wave-scanner/patternscope/patternscope/pipeline.py", line 86, in combine
-    pooled = summarize(pooled_tr, pooled_base, pooled_bars, hz)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/spy-wave-scanner/spy-wave-scanner/patternscope/patternscope/evaluate.py", line 104, in summarize
-    g = g.sort_values("signal_time")
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 8372, in sort_values
-    indexer = nargsort(
-              ^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/core/sorting.py", line 442, in nargsort
-    indexer = non_nan_idx[non_nans.argsort(kind=kind)]
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "pandas/_libs/tslibs/timestamps.pyx", line 502, in pandas._libs.tslibs.timestamps._Timestamp.__richcmp__
-TypeError: Cannot compare tz-naive and tz-aware timestamps
+
+Done in 200s -> output/report.html
+
+Best pooled patterns (grade A/B):
+tf                        pattern direction   n  target_pct  expectancy_R grade
+1d  Descending Triangle (break ↑)      LONG 165        27.9         0.510     B
+1d Symmetrical Triangle (break ↑)      LONG 122         9.8         0.419     B
+1d           Three White Soldiers      LONG  24         4.2         0.386     B
+1d          Golden Cross (50/200)      LONG 157        25.5         0.378     A
+1d         Bullish RSI Divergence      LONG 166        25.9         0.358     A
+1d   Ascending Triangle (break ↑)      LONG 110        38.2         0.341     B
+1d          52-Week High Breakout      LONG 568        28.5         0.310     B
+1d   Descending Channel (break ↑)      LONG 101        39.6         0.280     A
+1d                   Bull Pennant      LONG  62        24.2         0.263     B
+1d                      Bull Flag      LONG 318        14.2         0.261     B
+1d         MACD Zero-Line Cross ↑      LONG 999        24.4         0.227     B
+1d   Ascending Triangle (break ↓)     SHORT 134        22.4         0.222     B
+1d       Inverse Head & Shoulders      LONG 115        31.3         0.214     B
+1d              Bullish Belt Hold      LONG 764        38.5         0.194     B
+1d               Bullish Marubozu      LONG 451        36.8         0.191     B
