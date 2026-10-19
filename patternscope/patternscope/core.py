@@ -142,6 +142,7 @@ class Ctx:
         self.atr = atr(self.h, self.l, self.c, 14)
         self.rsi = rsi(self.c, 14)
         self.intraday = tf in INTRADAY
+        self.crypto = ticker.upper().endswith("-USD")
         self.pivots = find_pivots(self.h, self.l, self.atr, self.k, cfg["min_swing_atr"])
         self.mirrored = False
         # sessions (intraday): id per bar + last bar index of that session

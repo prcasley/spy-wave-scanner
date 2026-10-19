@@ -38,7 +38,8 @@ jobs:
           for i in 1 2 3 4; do
             git fetch -q origin main && git reset -q --hard origin/main
             mkdir -p docs/patterns
-            cp patternscope/output/report.html docs/patterns/index.html
+            cp patternscope/output/cockpit.html docs/patterns/index.html
+            cp patternscope/output/report.html docs/patterns/classic.html
             cp patternscope/output/guide.html docs/patterns/guide.html
             cp patternscope/output/pattern_stats.csv docs/patterns/
             [ -f patternscope/output/live_signals.csv ] && cp patternscope/output/live_signals.csv docs/patterns/ || true

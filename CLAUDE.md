@@ -57,11 +57,12 @@ spy-wave-scanner/
 ├── patternscope/                      # Pattern recognition + backtest engine (Yahoo Finance via yfinance — user-approved)
 │   ├── scan.py                        # CLI: scan watchlist, backtest every detection, write report + PatternScope.xlsx
 │   ├── validate.py                    # CLI: research validation on the S&P 500 (survivorship, out-of-sample, costs, BH significance)
-│   ├── universe_sp500.csv             # Fixed S&P 500 constituent list (source: datasets/s-and-p-500-companies)
+│   ├── universe_sp500.csv             # Fixed S&P 500 constituent list (source: datasets/s-and-p-500-companies); watchlist + CRYPTO in config.py
 │   ├── README.md / requirements.txt
 │   └── patternscope/                  # core, candles (40), chart (36), setups (35), evaluate, pipeline, report, data, config,
 │                                      # guide.py + guide_content.py (visual Pattern Guide -> docs/patterns/guide.html),
-│                                      # validation.py (verdicts), excel.py (one workbook with every table)
+│                                      # validation.py (verdicts), excel.py (one workbook with every table),
+│                                      # cockpit.py (Glass Cockpit front page -> docs/patterns/index.html; report.py -> classic.html)
 │
 ├── scripts/
 │   ├── run_scanner.py         [ 91L]  # Main entry point / CLI orchestrator

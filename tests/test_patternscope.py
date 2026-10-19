@@ -43,3 +43,11 @@ def test_validation_and_excel(tmp_path):
     out = tmp_path / "t.xlsx"
     excel.build(str(out), res, tbl)
     assert out.stat().st_size > 10_000
+
+
+def test_cockpit_renders():
+    from patternscope import cockpit
+
+    res = combine([analyze(synthetic("1d", 1500, seed=6), "X", "1d", TIMEFRAMES["1d"])], TIMEFRAMES)
+    html = cockpit.build(res, TIMEFRAMES)
+    assert "Flight display" in html and "/*__DATA__*/" not in html

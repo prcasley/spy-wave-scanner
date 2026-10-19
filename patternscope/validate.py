@@ -14,8 +14,8 @@ import time
 
 import numpy as np
 
-from patternscope import excel, guide, report
-from patternscope.config import TIMEFRAMES, WATCHLIST
+from patternscope import cockpit, excel, guide, report
+from patternscope.config import CRYPTO, TIMEFRAMES, WATCHLIST, is_crypto
 from patternscope.data import load_dividends, load_yahoo
 from patternscope.pipeline import analyze, combine
 from patternscope.validation import load_universe, run_universe, verdicts, write_tables
@@ -34,14 +34,14 @@ def main(argv=None):
 
     print("Watchlist…")
     results = []
-    for tk in WATCHLIST:
+    for tk in WATCHLIST + CRYPTO:
         for tf in a.tf:
             try:
                 df = load_yahoo(tk, tf)
                 if len(df) < 120:
                     continue
                 r = analyze(df, tk, tf, TIMEFRAMES[tf])
-                if r["snapshot"] is not None:
+                if r["snapshot"] is not None and not is_crypto(tk):
                     r["snapshot"]["dividends"] = load_dividends(tk)
                 results.append(r)
             except Exception as e:
@@ -62,6 +62,8 @@ def main(argv=None):
     excel.build(os.path.join(a.out, "PatternScope.xlsx"), res, tbl, meta, uni)
     with open(os.path.join(a.out, "report.html"), "w", encoding="utf-8") as f:
         f.write(report.build(res, TIMEFRAMES, verdicts=tbl))
+    with open(os.path.join(a.out, "cockpit.html"), "w", encoding="utf-8") as f:
+        f.write(cockpit.build(res, TIMEFRAMES, verdicts=tbl))
     with open(os.path.join(a.out, "guide.html"), "w", encoding="utf-8") as f:
         f.write(guide.build(res["stats"], time.strftime("%Y-%m-%d"), verdicts=tbl))
     print(tbl.verdict.value_counts().to_string())

@@ -42,7 +42,8 @@ jobs:
             git fetch -q origin main && git reset -q --hard origin/main
             mkdir -p docs/patterns/validation
             cp patternscope/output/validation/*.csv docs/patterns/validation/
-            cp patternscope/output/report.html docs/patterns/index.html
+            cp patternscope/output/cockpit.html docs/patterns/index.html
+            cp patternscope/output/report.html docs/patterns/classic.html
             cp patternscope/output/guide.html docs/patterns/guide.html
             git add docs/patterns
             git diff --staged --quiet && break

@@ -1,6 +1,12 @@
 """Tunable settings. Edit freely."""
 
 WATCHLIST = ["SPY", "QQQ", "NVDA", "TSLA", "MU", "GOOGL", "NBIS", "DELL", "BE", "CLSK", "TSLW"]
+# Crypto trades 24/7 on Yahoo (…-USD). Year = 365 daily bars, week = 7.
+CRYPTO = ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD"]
+
+
+def is_crypto(ticker: str) -> bool:
+    return ticker.upper().endswith("-USD")
 
 # Per timeframe:
 #   k              bars each side that define a swing pivot (bigger = fewer, larger swings)

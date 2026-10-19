@@ -101,7 +101,7 @@ def detect(ctx: Ctx) -> List[Signal]:
         emit(inside_prev & (c < lp), "Inside Bar Breakdown ↓", -1, lambda i: h[i - 1])
 
     # ---- N-bar high/low breakouts (52 week on daily/weekly, 20-day on intraday)
-    N = {"1d": 252, "1wk": 52}.get(ctx.tf, 140)
+    N = {"1d": 365 if ctx.crypto else 252, "1wk": 52}.get(ctx.tf, 140)
     label = "52-Week" if ctx.tf in ("1d", "1wk") else "20-Day"
     prior_hi = pd.Series(h).shift(1).rolling(N, min_periods=N).max().values
     prior_lo = pd.Series(l).shift(1).rolling(N, min_periods=N).min().values

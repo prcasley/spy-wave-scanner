@@ -15,15 +15,15 @@ import os
 import sys
 import time
 
-from patternscope import excel, guide, report
-from patternscope.config import TIMEFRAMES, WATCHLIST
+from patternscope import cockpit, excel, guide, report
+from patternscope.config import CRYPTO, TIMEFRAMES, WATCHLIST, is_crypto
 from patternscope.data import load_csv, load_dividends, load_yahoo, synthetic
 from patternscope.pipeline import analyze, combine
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tickers", nargs="+", default=WATCHLIST)
+    ap.add_argument("--tickers", nargs="+", default=WATCHLIST + CRYPTO)
     ap.add_argument("--tf", nargs="+", default=["1h", "1d", "1wk"], choices=list(TIMEFRAMES))
     ap.add_argument("--csv", help="load one OHLCV csv instead of Yahoo (use with --name and one --tf)")
     ap.add_argument("--name", default="CSV")
@@ -52,7 +52,7 @@ def main(argv=None):
                 print(f"  skip {tk} {tf}: only {len(df)} bars")
                 continue
             r = analyze(df, tk, tf, TIMEFRAMES[tf])
-            if r["snapshot"] is not None and not a.demo and not a.csv:
+            if r["snapshot"] is not None and not a.demo and not a.csv and not is_crypto(tk):
                 r["snapshot"]["dividends"] = load_dividends(tk)
             results.append(r)
             print(f"  {tk:6s} {tf:4s} {len(df):6d} bars  {len(r['trades']):6d} detections  {len(r['fresh'])} live")
@@ -76,6 +76,8 @@ def main(argv=None):
     from datetime import datetime
     with open(os.path.join(a.out, "guide.html"), "w", encoding="utf-8") as f:
         f.write(guide.build(res["stats"], datetime.now().strftime("%Y-%m-%d"), verdicts=vt))
+    with open(os.path.join(a.out, "cockpit.html"), "w", encoding="utf-8") as f:
+        f.write(cockpit.build(res, TIMEFRAMES, demo=a.demo, verdicts=vt))
     excel.build(os.path.join(a.out, "PatternScope.xlsx"), res, vt)
     print(f"\nDone in {time.time() - t0:.0f}s -> {path}")
     top = res["stats"]

@@ -26,6 +26,10 @@ def _records(df: pd.DataFrame, cols=None):
 
 
 def build(res: dict, tf_cfg: dict, demo: bool = False, verdicts=None) -> str:
+    return TEMPLATE.replace("/*__DATA__*/null", json.dumps(payload(res, tf_cfg, demo, verdicts), default=str))
+
+
+def payload(res: dict, tf_cfg: dict, demo: bool = False, verdicts=None) -> dict:
     stats = res["stats"]
     fresh = res["fresh"]
     payload = dict(
@@ -45,7 +49,7 @@ def build(res: dict, tf_cfg: dict, demo: bool = False, verdicts=None) -> str:
         n_trades=int(len(res["trades"])),
         n_patterns=int(res["trades"].pattern.nunique()) if len(res["trades"]) else 0,
     )
-    return TEMPLATE.replace("/*__DATA__*/null", json.dumps(payload, default=str))
+    return payload
 
 
 TEMPLATE = r"""<!doctype html>

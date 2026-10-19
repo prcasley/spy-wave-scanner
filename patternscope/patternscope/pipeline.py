@@ -52,14 +52,16 @@ def snapshot(ctx: Ctx) -> dict:
     c, h, n = ctx.c, ctx.h, ctx.n
     s50, s200 = sma(c, 50)[-1], sma(c, 200)[-1]
 
+    w, m, q, y = (7, 30, 91, 365) if ctx.crypto else (5, 21, 63, 252)
+
     def ret(k):
         return round((c[-1] / c[-1 - k] - 1) * 100, 2) if n > k else None
 
-    hi52 = h[-252:].max()
+    hi52 = h[-y:].max()
     trend = ("Uptrend" if c[-1] > s50 > s200 else "Downtrend" if c[-1] < s50 < s200
              else "Above 200" if c[-1] > s200 else "Below 200")
-    return dict(ticker=ctx.ticker, close=round(float(c[-1]), 2), r1w=ret(5), r1m=ret(21), r3m=ret(63),
-                r1y=ret(252), off_high=round((c[-1] / hi52 - 1) * 100, 2), rsi=round(float(ctx.rsi[-1]), 1),
+    return dict(ticker=ctx.ticker, market="crypto" if ctx.crypto else "stocks", close=round(float(c[-1]), 4 if c[-1] < 1 else 2),
+                r1w=ret(w), r1m=ret(m), r3m=ret(q), r1y=ret(y), off_high=round((c[-1] / hi52 - 1) * 100, 2), rsi=round(float(ctx.rsi[-1]), 1),
                 atr_pct=round(float(ctx.atr[-1] / c[-1] * 100), 2), trend=trend,
                 vs50=round((c[-1] / s50 - 1) * 100, 2) if np.isfinite(s50) else None,
                 vs200=round((c[-1] / s200 - 1) * 100, 2) if np.isfinite(s200) else None)
