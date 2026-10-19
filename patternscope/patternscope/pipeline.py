@@ -11,7 +11,21 @@ from .core import Ctx, sma
 from .evaluate import baseline, evaluate, pullback_profile, summarize
 
 
+def normalize_index(df: pd.DataFrame, tf: str) -> pd.DataFrame:
+    """One time convention for every source: intraday = New York time (tz-aware), daily/weekly = date (naive)."""
+    idx = pd.DatetimeIndex(df.index)
+    if tf in ("1d", "1wk"):
+        if idx.tz is not None:
+            idx = idx.tz_convert("America/New_York").tz_localize(None)
+    else:
+        idx = idx.tz_localize("America/New_York") if idx.tz is None else idx.tz_convert("America/New_York")
+    df = df.copy()
+    df.index = idx
+    return df
+
+
 def analyze(df: pd.DataFrame, ticker: str, tf: str, cfg: dict) -> dict:
+    df = normalize_index(df, tf)
     ctx = Ctx(df, tf, cfg, ticker)
     sigs = candles.detect(ctx) + chart.detect(ctx) + setups.detect(ctx)
     trades = evaluate(ctx, sigs, cfg["max_hold"], cfg["horizons"])

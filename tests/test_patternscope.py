@@ -61,3 +61,11 @@ def test_feed_schema():
     assert d["schema_version"] == 1
     for s in d["signals"]:
         assert s["market"] == "crypto" and len(s["id"]) == 16 and s["entry_rule"] == "next bar open"
+
+
+def test_mixed_timezones_combine():
+    a = synthetic("1d", 1200, seed=2)
+    a.index = a.index.tz_localize(None)  # Yahoo daily: naive
+    b = synthetic("1d", 1200, seed=3)    # exchange daily: tz-aware
+    res = combine([analyze(a, "SPY", "1d", TIMEFRAMES["1d"]), analyze(b, "BTC-USD", "1d", TIMEFRAMES["1d"])], TIMEFRAMES)
+    assert len(res["stats"]) > 0
