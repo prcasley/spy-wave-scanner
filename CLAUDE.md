@@ -64,6 +64,7 @@ spy-wave-scanner/
 │                                      # validation.py (verdicts), excel.py (one workbook with every table),
 │                                      # cockpit.py (Glass Cockpit front page -> docs/patterns/index.html; report.py -> classic.html),
 │                                      # feed.py (latest.json signal feed for other apps), data.py load_ccxt (crypto via CCXT/coinbase)
+│   ├── INTEGRATION.md                 # Brief for the agent wiring the local paper-trading simulator to latest.json
 │   ├── pyproject.toml                 # pip-installable: pip install "patternscope[data] @ git+...#subdirectory=patternscope"
 │
 ├── scripts/
