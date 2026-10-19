@@ -1,16 +1,14 @@
 name: Wave Options Scanner
 
 on:
-  schedule:
-    # Every 15 minutes during US market hours (Mon-Fri 13:30-20:00 UTC)
-    - cron: '*/15 13-20 * * 1-5'
+  # Intraday 15-minute schedule removed at Prat's request (Oct 2026) — run manually instead.
   push:
   workflow_dispatch:
 
 jobs:
   scan:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
