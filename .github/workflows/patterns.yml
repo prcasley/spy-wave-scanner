@@ -1,0 +1,61 @@
+name: PatternScope
+
+on:
+  schedule:
+    # 21:37 UTC = 5:37pm ET (EDT), once per weekday after the close. No intraday runs.
+    - cron: '37 21 * * 1-5'
+  push:
+    branches: [main]
+    paths: ['patternscope/**', '.github/workflows/patterns.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: dashboard          # shares the Pages deploy queue with dashboard.yml
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r patternscope/requirements.txt
+      - name: Scan watchlist (Yahoo Finance)
+        working-directory: patternscope
+        run: |
+          python scan.py --out output
+          mkdir -p ../docs/patterns
+          cp output/report.html ../docs/patterns/index.html
+          cp output/pattern_stats.csv ../docs/patterns/
+          [ -f output/live_signals.csv ] && cp output/live_signals.csv ../docs/patterns/ || true
+      - name: Commit report
+        run: |
+          git config user.name  "patternscope bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/patterns
+          if git diff --staged --quiet; then echo "no change"; else
+            git commit -m "patterns: $(date -u +%Y-%m-%d\ %H:%M)"
+            git pull --rebase origin main && git push
+          fi
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -54,6 +54,11 @@ spy-wave-scanner/
 │   ├── alert_engine.py        [321L]  # Alert generation, formatting, Slack/email/SMS dispatch
 │   └── dashboard.py           [641L]  # Streamlit UI — dark-themed chart, wave labels, fib lines, RSI/MACD
 │
+├── patternscope/                      # Pattern recognition + backtest engine (Yahoo Finance via yfinance — user-approved)
+│   ├── scan.py                        # CLI: scan watchlist, backtest every detection, write report
+│   ├── README.md / requirements.txt
+│   └── patternscope/                  # core, candles (40), chart (36), setups (35), evaluate, pipeline, report, data, config
+│
 ├── scripts/
 │   ├── run_scanner.py         [ 91L]  # Main entry point / CLI orchestrator
 │   ├── demo_pipeline.py       [147L]  # End-to-end pipeline demo on saved Yahoo fixtures
@@ -71,6 +76,7 @@ spy-wave-scanner/
 │   ├── test_pivots.py         [137L]  # Pivot detection + filtering + sequence classification
 │   ├── test_fibs.py           [102L]  # Retracement, extension, confluence zone tests
 │   ├── test_wave_rules.py     [189L]  # Cardinal rule validation, projection, corrective patterns
+│   ├── test_patternscope.py           # PatternScope smoke + lookahead tests
 │   ├── test_alerts.py         [199L]  # Proximity alerts, cooldown, formatting, divergence alerts
 │   ├── test_data_feed.py      [ 60L]  # OHLCV fetch + indicator column tests
 │   ├── test_options_feed.py   [ 47L]  # Options chain parsing tests
@@ -84,6 +90,7 @@ spy-wave-scanner/
 └── .github/
     └── workflows/
         ├── scanner.yml                # GitHub Actions: scan, test, lint (ruff), typecheck (mypy)
+        ├── patterns.yml               # GitHub Actions: PatternScope once per weekday after close -> docs/patterns/, deploy Pages
         └── dashboard.yml              # GitHub Actions: regenerate docs/ twice each weekday, commit, deploy Pages
 ```
 
