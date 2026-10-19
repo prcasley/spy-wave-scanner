@@ -33,6 +33,8 @@ jobs:
       - run: pip install -r patternscope/requirements.txt
       - name: Validate on the S&P 500
         working-directory: patternscope
+        env:
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
         run: python validate.py --out output --limit ${{ inputs.limit || '0' }}
       - name: Publish tables + pages
         run: |

@@ -63,6 +63,31 @@ def load_ccxt(ticker: str, tf: str, exchange: str = "coinbase", days: int | None
     return df
 
 
+TD_INTERVAL = {"1h": "1h", "1d": "1day", "1wk": "1week", "15m": "15min", "5m": "5min"}
+_td_last = [0.0]
+
+
+def load_twelvedata(ticker: str, tf: str, key: str) -> pd.DataFrame:
+    """Backup stock source (Twelve Data REST). Free tier: 8 calls/min, so calls are spaced out."""
+    import json
+    import urllib.parse
+    import urllib.request
+    wait = 8.0 - (time.time() - _td_last[0])
+    if wait > 0:
+        time.sleep(wait)
+    _td_last[0] = time.time()
+    sym = ticker.upper().replace("-USD", "/USD")
+    q = urllib.parse.urlencode(dict(symbol=sym, interval=TD_INTERVAL[tf], outputsize=5000, apikey=key,
+                                    timezone="America/New_York", order="ASC"))
+    with urllib.request.urlopen(f"https://api.twelvedata.com/time_series?{q}", timeout=60) as r:
+        js = json.load(r)
+    if js.get("status") != "ok":
+        raise RuntimeError(f"Twelve Data: {js.get('message', js)}"[:200])
+    df = pd.DataFrame(js["values"]).set_index("datetime")
+    df.index = pd.DatetimeIndex(pd.to_datetime(df.index)).tz_localize("America/New_York")
+    return _clean(df)
+
+
 def load_prices(ticker: str, tf: str, refresh: bool = False) -> pd.DataFrame:
     """Crypto -> CCXT (exchange data, fresher) with Yahoo as fallback; everything else -> Yahoo."""
     from .config import CRYPTO_SOURCE, is_crypto
@@ -77,7 +102,14 @@ def load_prices(ticker: str, tf: str, refresh: bool = False) -> pd.DataFrame:
             return df
         except Exception as e:
             print(f"  CCXT failed for {ticker} {tf} ({e}); falling back to Yahoo")
-    return load_yahoo(ticker, tf, refresh=refresh)
+    try:
+        return load_yahoo(ticker, tf, refresh=refresh)
+    except Exception as e:
+        key = os.environ.get("TWELVEDATA_KEY")
+        if not key:
+            raise
+        print(f"  Yahoo failed for {ticker} {tf} ({e}); trying Twelve Data")
+        return load_twelvedata(ticker, tf, key)
 
 
 def load_yahoo(ticker: str, tf: str, refresh: bool = False, max_age_hours: float = 6) -> pd.DataFrame:

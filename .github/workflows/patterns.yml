@@ -30,14 +30,22 @@ jobs:
       - run: pip install -r patternscope/requirements.txt
       - name: Scan watchlist (Yahoo Finance)
         working-directory: patternscope
-        run: python scan.py --out output
+        env:
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
+        run: |
+          mkdir -p output
+          set -o pipefail
+          python scan.py --out output 2>&1 | tee output/run_log.txt
       - name: Commit report
+        if: always()
         run: |
           git config user.name  "patternscope bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4; do
             git fetch -q origin main && git reset -q --hard origin/main
             mkdir -p docs/patterns
+            cp patternscope/output/run_log.txt docs/patterns/run_log.txt 2>/dev/null || true
+            [ -f patternscope/output/cockpit.html ] || { git add docs/patterns; git commit -q -m "patterns: run log (failed run)" || true; git push -q origin HEAD:main || true; exit 0; }
             cp patternscope/output/cockpit.html docs/patterns/index.html
             cp patternscope/output/report.html docs/patterns/classic.html
             cp patternscope/output/guide.html docs/patterns/guide.html
