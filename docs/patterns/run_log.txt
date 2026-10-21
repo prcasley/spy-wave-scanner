@@ -1,68 +1,68 @@
-  SPY    1h     5065 bars    6443 detections  2 live
-  SPY    1d     8487 bars   10611 detections  7 live
-  SPY    1wk    1760 bars    1727 detections  1 live
-  QQQ    1h     5066 bars    6405 detections  3 live
-  QQQ    1d     6945 bars    8381 detections  6 live
-  QQQ    1wk    1441 bars    1388 detections  2 live
-  NVDA   1h     5066 bars    6259 detections  4 live
-  NVDA   1d     6977 bars    8037 detections  5 live
-  NVDA   1wk    1448 bars    1409 detections  3 live
-  TSLA   1h     5066 bars    6303 detections  3 live
-  TSLA   1d     4101 bars    4721 detections  6 live
-  TSLA   1wk     851 bars     895 detections  3 live
-  MU     1h     5066 bars    6307 detections  3 live
-  MU     1d    10677 bars   12395 detections  4 live
-  MU     1wk    2212 bars    2092 detections  2 live
-  GOOGL  1h     5066 bars    6201 detections  3 live
-  GOOGL  1d     5576 bars    6384 detections  2 live
-  GOOGL  1wk    1157 bars    1110 detections  1 live
-  NBIS   1h     3471 bars    4393 detections  3 live
-  NBIS   1d      499 bars     561 detections  2 live
-  skip NBIS 1wk: only 104 bars
-  DELL   1h     5065 bars    6218 detections  1 live
-  DELL   1d     2556 bars    2816 detections  5 live
-  DELL   1wk     531 bars     479 detections  5 live
-  BE     1h     5062 bars    6443 detections  1 live
-  BE     1d     2069 bars    2228 detections  4 live
-  BE     1wk     430 bars     390 detections  6 live
-  CLSK   1h     5059 bars    6559 detections  1 live
-  CLSK   1d     2492 bars    2631 detections  2 live
-  CLSK   1wk     518 bars     480 detections  1 live
-  TSLW   1h     2414 bars    3301 detections  0 live
-  TSLW   1d      418 bars     482 detections  6 live
-  skip TSLW 1wk: only 87 bars
-  BTC-USD 1h    17486 bars   19458 detections  1 live
-  BTC-USD 1d     4000 bars    3926 detections  3 live
-  BTC-USD 1wk     573 bars     520 detections  0 live
-  ETH-USD 1h    17486 bars   19027 detections  5 live
-  ETH-USD 1d     3806 bars    3556 detections  0 live
+  SPY    1h     5065 bars    6443 detections  7 live
+  SPY    1d     8488 bars   10605 detections  6 live
+  SPY    1wk    1761 bars    1726 detections  0 live
+  QQQ    1h     5066 bars    6403 detections  3 live
+  QQQ    1d     6946 bars    8388 detections  5 live
+  QQQ    1wk    1442 bars    1388 detections  3 live
+  NVDA   1h     5066 bars    6256 detections  3 live
+  NVDA   1d     6978 bars    8040 detections  3 live
+  NVDA   1wk    1449 bars    1415 detections  1 live
+  TSLA   1h     5066 bars    6306 detections  2 live
+  TSLA   1d     4102 bars    4721 detections  4 live
+  TSLA   1wk     852 bars     897 detections  2 live
+  MU     1h     5066 bars    6311 detections  4 live
+  MU     1d    10678 bars   12402 detections  4 live
+  MU     1wk    2213 bars    2103 detections  1 live
+  GOOGL  1h     5066 bars    6194 detections  1 live
+  GOOGL  1d     5577 bars    6384 detections  2 live
+  GOOGL  1wk    1158 bars    1112 detections  2 live
+  NBIS   1h     3478 bars    4403 detections  6 live
+  NBIS   1d      500 bars     564 detections  3 live
+  skip NBIS 1wk: only 105 bars
+  DELL   1h     5065 bars    6214 detections  5 live
+  DELL   1d     2557 bars    2820 detections  3 live
+  DELL   1wk     532 bars     483 detections  2 live
+  BE     1h     5062 bars    6442 detections  4 live
+  BE     1d     2070 bars    2230 detections  3 live
+  BE     1wk     431 bars     391 detections  1 live
+  CLSK   1h     5059 bars    6567 detections  2 live
+  CLSK   1d     2493 bars    2632 detections  1 live
+  CLSK   1wk     519 bars     481 detections  1 live
+  TSLW   1h     2421 bars    3317 detections  4 live
+  TSLW   1d      419 bars     482 detections  5 live
+  skip TSLW 1wk: only 88 bars
+  BTC-USD 1h    17486 bars   19450 detections  1 live
+  BTC-USD 1d     4000 bars    3927 detections  3 live
+  BTC-USD 1wk     572 bars     516 detections  0 live
+  ETH-USD 1h    17486 bars   19021 detections  1 live
+  ETH-USD 1d     3807 bars    3559 detections  3 live
   ETH-USD 1wk     545 bars     470 detections  0 live
-  SOL-USD 1h    17486 bars   19017 detections  4 live
-  SOL-USD 1d     1952 bars    1841 detections  0 live
+  SOL-USD 1h    17486 bars   19015 detections  6 live
+  SOL-USD 1d     1953 bars    1843 detections  2 live
   SOL-USD 1wk     280 bars     246 detections  0 live
-  XRP-USD 1h    17486 bars   19231 detections  3 live
-  XRP-USD 1d     1890 bars    1759 detections  0 live
+  XRP-USD 1h    17486 bars   19236 detections  2 live
+  XRP-USD 1d     1891 bars    1761 detections  3 live
   XRP-USD 1wk     272 bars     263 detections  0 live
-  DOGE-USD 1h    17486 bars   19089 detections  1 live
-  DOGE-USD 1d     1966 bars    1840 detections  0 live
+  DOGE-USD 1h    17486 bars   19093 detections  2 live
+  DOGE-USD 1d     1967 bars    1842 detections  2 live
   DOGE-USD 1wk     282 bars     235 detections  0 live
 
-Done in 149s -> output/report.html
+Done in 178s -> output/report.html
 
 Best pooled patterns (grade A/B):
 tf                        pattern direction   n  target_pct  expectancy_R grade
-1d  Descending Triangle (break ↑)      LONG 164        28.0         0.512     B
-1d Symmetrical Triangle (break ↑)      LONG 119        10.1         0.454     B
+1d  Descending Triangle (break ↑)      LONG 165        27.9         0.518     B
+1d Symmetrical Triangle (break ↑)      LONG 121         9.9         0.430     B
+1d           Three White Soldiers      LONG  24         4.2         0.386     B
 1d          Golden Cross (50/200)      LONG 157        25.5         0.378     A
-1d           Three White Soldiers      LONG  23         4.3         0.376     B
-1d         Bullish RSI Divergence      LONG 168        25.6         0.356     A
-1d   Ascending Triangle (break ↑)      LONG 108        37.0         0.348     B
-1d          52-Week High Breakout      LONG 568        28.5         0.309     B
-1d   Descending Channel (break ↑)      LONG  99        39.4         0.283     A
-1d                      Bull Flag      LONG 319        14.7         0.275     A
-1d    Ascending Channel (break ↑)      LONG  44        45.5         0.238     B
+1d   Ascending Triangle (break ↑)      LONG 109        37.6         0.354     B
+1d         Bullish RSI Divergence      LONG 167        25.1         0.340     A
+1d          52-Week High Breakout      LONG 569        28.5         0.310     B
+1d                      Bull Flag      LONG 315        14.6         0.283     A
+1d   Descending Channel (break ↑)      LONG 102        39.2         0.263     A
 1d         MACD Zero-Line Cross ↑      LONG 999        24.4         0.227     B
-1d                   Bull Pennant      LONG  61        23.0         0.221     B
-1d       Inverse Head & Shoulders      LONG 113        31.9         0.219     B
-1d   Ascending Triangle (break ↓)     SHORT 136        22.1         0.208     B
-1d                Three Inside Up      LONG 309        25.9         0.203     B
+1d   Ascending Triangle (break ↓)     SHORT 132        22.0         0.220     B
+1d       Inverse Head & Shoulders      LONG 112        31.2         0.209     B
+1d    Ascending Channel (break ↑)      LONG  42        42.9         0.205     B
+1d                   Bull Pennant      LONG  62        22.6         0.201     B
+1d              Bullish Belt Hold      LONG 764        38.5         0.194     B
