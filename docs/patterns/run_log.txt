@@ -538,30 +538,30 @@ See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace 
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:224: Pandas4Warning: The inplace keyword in DataFrame.sort_index is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.sort_index(level=0, axis=1, inplace=True)
-$NBIS: 1h data not available for startTime=1729517400 and endTime=1792714134. The requested range must be within the last 730 days.
+$NBIS: 1h data not available for startTime=1729517400 and endTime=1792799950. The requested range must be within the last 730 days.
 
 1 Failed download:
-['NBIS']: 1h data not available for startTime=1729517400 and endTime=1792714134. The requested range must be within the last 730 days.
+['NBIS']: 1h data not available for startTime=1729517400 and endTime=1792799950. The requested range must be within the last 730 days.
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:220: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.rename(columns=ctx.isins, inplace=True)
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:224: Pandas4Warning: The inplace keyword in DataFrame.sort_index is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.sort_index(level=0, axis=1, inplace=True)
-$NBIS: 1h data not available for startTime=1729517400 and endTime=1792714137. The requested range must be within the last 730 days.
+$NBIS: 1h data not available for startTime=1729517400 and endTime=1792799952. The requested range must be within the last 730 days.
 
 1 Failed download:
-['NBIS']: 1h data not available for startTime=1729517400 and endTime=1792714137. The requested range must be within the last 730 days.
+['NBIS']: 1h data not available for startTime=1729517400 and endTime=1792799952. The requested range must be within the last 730 days.
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:220: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.rename(columns=ctx.isins, inplace=True)
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:224: Pandas4Warning: The inplace keyword in DataFrame.sort_index is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.sort_index(level=0, axis=1, inplace=True)
-$NBIS: 1h data not available for startTime=1729517400 and endTime=1792714141. The requested range must be within the last 730 days.
+$NBIS: 1h data not available for startTime=1729517400 and endTime=1792799956. The requested range must be within the last 730 days.
 
 1 Failed download:
-['NBIS']: 1h data not available for startTime=1729517400 and endTime=1792714141. The requested range must be within the last 730 days.
+['NBIS']: 1h data not available for startTime=1729517400 and endTime=1792799956. The requested range must be within the last 730 days.
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:220: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.rename(columns=ctx.isins, inplace=True)
@@ -908,70 +908,70 @@ See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace 
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/multi.py:224: Pandas4Warning: The inplace keyword in DataFrame.sort_index is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   data.sort_index(level=0, axis=1, inplace=True)
-  SPY    1h     5069 bars    6449 detections  4 live
-  SPY    1d     8490 bars   10603 detections  3 live
-  SPY    1wk    1761 bars    1726 detections  1 live
-  QQQ    1h     5070 bars    6425 detections  4 live
-  QQQ    1d     6948 bars    8395 detections  1 live
-  QQQ    1wk    1442 bars    1387 detections  2 live
-  NVDA   1h     5070 bars    6276 detections  2 live
-  NVDA   1d     6980 bars    8041 detections  3 live
+  SPY    1h     5069 bars    6443 detections  2 live
+  SPY    1d     8492 bars   10619 detections  7 live
+  SPY    1wk    1761 bars    1727 detections  2 live
+  QQQ    1h     5070 bars    6420 detections  4 live
+  QQQ    1d     6950 bars    8410 detections  5 live
+  QQQ    1wk    1442 bars    1388 detections  2 live
+  NVDA   1h     5070 bars    6275 detections  5 live
+  NVDA   1d     6982 bars    8029 detections  3 live
   NVDA   1wk    1449 bars    1409 detections  1 live
-  TSLA   1h     5070 bars    6305 detections  1 live
-  TSLA   1d     4104 bars    4726 detections  5 live
-  TSLA   1wk     852 bars     895 detections  0 live
-  MU     1h     5070 bars    6319 detections  1 live
-  MU     1d    10680 bars   12391 detections  3 live
-  MU     1wk    2213 bars    2104 detections  0 live
-  GOOGL  1h     5070 bars    6198 detections  2 live
-  GOOGL  1d     5579 bars    6388 detections  5 live
-  GOOGL  1wk    1158 bars    1114 detections  4 live
-  NBIS   1d      502 bars     564 detections  0 live
+  TSLA   1h     5070 bars    6305 detections  0 live
+  TSLA   1d     4106 bars    4730 detections  4 live
+  TSLA   1wk     852 bars     896 detections  1 live
+  MU     1h     5070 bars    6312 detections  2 live
+  MU     1d    10682 bars   12383 detections  3 live
+  MU     1wk    2213 bars    2114 detections  0 live
+  GOOGL  1h     5070 bars    6194 detections  2 live
+  GOOGL  1d     5581 bars    6390 detections  2 live
+  GOOGL  1wk    1158 bars    1115 detections  5 live
+  NBIS   1d      504 bars     564 detections  0 live
   skip NBIS 1wk: only 105 bars
-  DELL   1h     5069 bars    6225 detections  3 live
-  DELL   1d     2559 bars    2822 detections  2 live
+  DELL   1h     5069 bars    6219 detections  4 live
+  DELL   1d     2561 bars    2827 detections  4 live
   DELL   1wk     532 bars     479 detections  1 live
-  BE     1h     5066 bars    6457 detections  7 live
-  BE     1d     2072 bars    2234 detections  4 live
-  BE     1wk     431 bars     390 detections  0 live
-  CLSK   1h     5063 bars    6581 detections  8 live
-  CLSK   1d     2495 bars    2632 detections  0 live
-  CLSK   1wk     519 bars     480 detections  0 live
-  TSLW   1h     2435 bars    3335 detections  1 live
-  TSLW   1d      421 bars     487 detections  5 live
+  BE     1h     5066 bars    6460 detections  4 live
+  BE     1d     2074 bars    2238 detections  4 live
+  BE     1wk     431 bars     391 detections  1 live
+  CLSK   1h     5063 bars    6574 detections  2 live
+  CLSK   1d     2497 bars    2633 detections  1 live
+  CLSK   1wk     519 bars     481 detections  1 live
+  TSLW   1h     2442 bars    3346 detections  4 live
+  TSLW   1d      423 bars     492 detections  4 live
   skip TSLW 1wk: only 88 bars
-  BTC-USD 1h    17486 bars   19445 detections  1 live
+  BTC-USD 1h    17486 bars   19445 detections  5 live
   BTC-USD 1d     4000 bars    3925 detections  4 live
   BTC-USD 1wk     572 bars     518 detections  1 live
-  ETH-USD 1h    17486 bars   19022 detections  1 live
+  ETH-USD 1h    17486 bars   19024 detections  5 live
   ETH-USD 1d     3809 bars    3560 detections  0 live
   ETH-USD 1wk     545 bars     470 detections  0 live
-  SOL-USD 1h    17486 bars   19009 detections  3 live
+  SOL-USD 1h    17485 bars   19021 detections  4 live
   SOL-USD 1d     1955 bars    1843 detections  0 live
-  SOL-USD 1wk     280 bars     248 detections  2 live
-  XRP-USD 1h    17486 bars   19215 detections  3 live
-  XRP-USD 1d     1893 bars    1762 detections  1 live
+  SOL-USD 1wk     280 bars     247 detections  1 live
+  XRP-USD 1h    17486 bars   19225 detections  4 live
+  XRP-USD 1d     1894 bars    1762 detections  0 live
   XRP-USD 1wk     272 bars     263 detections  0 live
-  DOGE-USD 1h    17486 bars   19070 detections  1 live
-  DOGE-USD 1d     1969 bars    1843 detections  1 live
-  DOGE-USD 1wk     282 bars     236 detections  1 live
+  DOGE-USD 1h    17486 bars   19062 detections  3 live
+  DOGE-USD 1d     1970 bars    1842 detections  0 live
+  DOGE-USD 1wk     282 bars     235 detections  0 live
 
-Done in 178s -> output/report.html
+Done in 189s -> output/report.html
 
 Best pooled patterns (grade A/B):
 tf                        pattern direction    n  target_pct  expectancy_R grade
-1d  Descending Triangle (break ↑)      LONG  165        27.3         0.497     B
-1d Symmetrical Triangle (break ↑)      LONG  119        10.1         0.454     B
+1d  Descending Triangle (break ↑)      LONG  166        27.7         0.510     B
+1d Symmetrical Triangle (break ↑)      LONG  121         9.9         0.441     B
+1d   Ascending Triangle (break ↑)      LONG  109        39.4         0.403     B
 1d          Golden Cross (50/200)      LONG  157        25.5         0.378     A
 1d           Three White Soldiers      LONG   23         4.3         0.376     B
-1d         Bullish RSI Divergence      LONG  165        26.1         0.372     A
-1d   Ascending Triangle (break ↑)      LONG  110        37.3         0.342     B
-1d          52-Week High Breakout      LONG  570        28.4         0.308     B
-1d   Descending Channel (break ↑)      LONG  101        39.6         0.280     A
-1d                      Bull Flag      LONG  318        14.5         0.262     A
-1d                   Bull Pennant      LONG   61        23.0         0.239     B
+1d         Bullish RSI Divergence      LONG  163        25.2         0.349     A
+1d          52-Week High Breakout      LONG  567        28.6         0.312     B
+1d                      Bull Flag      LONG  317        14.5         0.274     A
+1d   Descending Channel (break ↑)      LONG  100        39.0         0.265     A
+1d   Ascending Triangle (break ↓)     SHORT  130        22.3         0.239     B
+1d    Ascending Channel (break ↑)      LONG   43        44.2         0.228     B
 1d         MACD Zero-Line Cross ↑      LONG 1000        24.4         0.226     B
-1d       Inverse Head & Shoulders      LONG  114        31.6         0.219     B
-1d    Ascending Channel (break ↑)      LONG   45        44.4         0.207     B
-1d   Ascending Triangle (break ↓)     SHORT  134        21.6         0.206     B
 1d              Bullish Belt Hold      LONG  764        38.5         0.194     B
+1d                Three Inside Up      LONG  308        25.6         0.191     B
+1d               Bullish Marubozu      LONG  452        36.7         0.188     B
