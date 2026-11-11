@@ -1,80 +1,80 @@
-$NBIS: 1h data not available for startTime=1729517400 and endTime=1794282491. The requested range must be within the last 730 days.
+$NBIS: 1h data not available for startTime=1729517400 and endTime=1794360501. The requested range must be within the last 730 days.
 
 1 Failed download:
-['NBIS']: 1h data not available for startTime=1729517400 and endTime=1794282491. The requested range must be within the last 730 days.
-$NBIS: 1h data not available for startTime=1729517400 and endTime=1794282494. The requested range must be within the last 730 days.
+['NBIS']: 1h data not available for startTime=1729517400 and endTime=1794360501. The requested range must be within the last 730 days.
+$NBIS: 1h data not available for startTime=1729517400 and endTime=1794360503. The requested range must be within the last 730 days.
 
 1 Failed download:
-['NBIS']: 1h data not available for startTime=1729517400 and endTime=1794282494. The requested range must be within the last 730 days.
-$NBIS: 1h data not available for startTime=1729517400 and endTime=1794282498. The requested range must be within the last 730 days.
+['NBIS']: 1h data not available for startTime=1729517400 and endTime=1794360503. The requested range must be within the last 730 days.
+$NBIS: 1h data not available for startTime=1729517400 and endTime=1794360507. The requested range must be within the last 730 days.
 
 1 Failed download:
-['NBIS']: 1h data not available for startTime=1729517400 and endTime=1794282498. The requested range must be within the last 730 days.
+['NBIS']: 1h data not available for startTime=1729517400 and endTime=1794360507. The requested range must be within the last 730 days.
   ERROR NBIS 1h: No data for NBIS 1h: None
-  SPY    1h     5069 bars    6479 detections  6 live
-  SPY    1d     8503 bars   10648 detections  6 live
-  SPY    1wk    1764 bars    1730 detections  2 live
-  QQQ    1h     5070 bars    6435 detections  7 live
-  QQQ    1d     6961 bars    8422 detections  5 live
-  QQQ    1wk    1445 bars    1395 detections  2 live
-  NVDA   1h     5070 bars    6291 detections  10 live
-  NVDA   1d     6993 bars    8052 detections  7 live
-  NVDA   1wk    1452 bars    1417 detections  3 live
-  TSLA   1h     5070 bars    6295 detections  4 live
+  SPY    1h     5069 bars    6474 detections  2 live
+  SPY    1d     8503 bars   10639 detections  6 live
+  SPY    1wk    1764 bars    1730 detections  1 live
+  QQQ    1h     5070 bars    6433 detections  3 live
+  QQQ    1d     6961 bars    8421 detections  5 live
+  QQQ    1wk    1445 bars    1396 detections  2 live
+  NVDA   1h     5070 bars    6290 detections  0 live
+  NVDA   1d     6993 bars    8062 detections  7 live
+  NVDA   1wk    1452 bars    1416 detections  3 live
+  TSLA   1h     5070 bars    6295 detections  3 live
   TSLA   1d     4117 bars    4749 detections  5 live
   TSLA   1wk     855 bars     904 detections  2 live
-  MU     1h     5070 bars    6310 detections  7 live
-  MU     1d    10693 bars   12428 detections  5 live
-  MU     1wk    2216 bars    2099 detections  2 live
-  GOOGL  1h     5070 bars    6206 detections  2 live
-  GOOGL  1d     5592 bars    6401 detections  4 live
-  GOOGL  1wk    1161 bars    1122 detections  0 live
+  MU     1h     5070 bars    6306 detections  3 live
+  MU     1d    10693 bars   12406 detections  5 live
+  MU     1wk    2216 bars    2122 detections  2 live
+  GOOGL  1h     5070 bars    6202 detections  6 live
+  GOOGL  1d     5592 bars    6404 detections  4 live
+  GOOGL  1wk    1161 bars    1123 detections  0 live
   NBIS   1d      515 bars     580 detections  5 live
   skip NBIS 1wk: only 108 bars
-  DELL   1h     5069 bars    6222 detections  6 live
-  DELL   1d     2572 bars    2844 detections  5 live
-  DELL   1wk     535 bars     479 detections  1 live
-  BE     1h     5066 bars    6463 detections  6 live
+  DELL   1h     5069 bars    6220 detections  3 live
+  DELL   1d     2572 bars    2840 detections  5 live
+  DELL   1wk     535 bars     478 detections  1 live
+  BE     1h     5066 bars    6467 detections  3 live
   BE     1d     2085 bars    2256 detections  5 live
-  BE     1wk     434 bars     398 detections  2 live
-  CLSK   1h     5063 bars    6577 detections  6 live
+  BE     1wk     434 bars     399 detections  3 live
+  CLSK   1h     5063 bars    6571 detections  0 live
   CLSK   1d     2508 bars    2649 detections  7 live
   CLSK   1wk     522 bars     482 detections  0 live
-  TSLW   1h     2519 bars    3465 detections  7 live
+  TSLW   1h     2526 bars    3473 detections  4 live
   TSLW   1d      434 bars     511 detections  6 live
   skip TSLW 1wk: only 91 bars
-  BTC-USD 1h    17486 bars   19445 detections  4 live
-  BTC-USD 1d     4000 bars    3917 detections  2 live
-  BTC-USD 1wk     573 bars     519 detections  0 live
-  ETH-USD 1h    17486 bars   18980 detections  1 live
-  ETH-USD 1d     3827 bars    3580 detections  1 live
+  BTC-USD 1h    17486 bars   19446 detections  2 live
+  BTC-USD 1d     4000 bars    3917 detections  1 live
+  BTC-USD 1wk     572 bars     513 detections  0 live
+  ETH-USD 1h    17486 bars   18983 detections  1 live
+  ETH-USD 1d     3828 bars    3581 detections  1 live
   ETH-USD 1wk     548 bars     471 detections  1 live
-  SOL-USD 1h    17486 bars   19031 detections  1 live
-  SOL-USD 1d     1973 bars    1861 detections  1 live
+  SOL-USD 1h    17486 bars   19027 detections  1 live
+  SOL-USD 1d     1974 bars    1863 detections  2 live
   SOL-USD 1wk     283 bars     247 detections  1 live
-  XRP-USD 1h    17486 bars   19212 detections  3 live
-  XRP-USD 1d     1911 bars    1779 detections  0 live
+  XRP-USD 1h    17486 bars   19211 detections  2 live
+  XRP-USD 1d     1912 bars    1779 detections  0 live
   XRP-USD 1wk     275 bars     266 detections  0 live
-  DOGE-USD 1h    17486 bars   19055 detections  4 live
-  DOGE-USD 1d     1987 bars    1860 detections  1 live
-  DOGE-USD 1wk     285 bars     236 detections  1 live
+  DOGE-USD 1h    17486 bars   19065 detections  2 live
+  DOGE-USD 1d     1988 bars    1861 detections  1 live
+  DOGE-USD 1wk     285 bars     235 detections  0 live
 
-Done in 182s -> output/report.html
+Done in 187s -> output/report.html
 
 Best pooled patterns (grade A/B):
 tf                        pattern direction    n  target_pct  expectancy_R grade
-1d  Descending Triangle (break ↑)      LONG  167        28.1         0.504     B
-1d Symmetrical Triangle (break ↑)      LONG  119        10.1         0.454     B
+1d  Descending Triangle (break ↑)      LONG  167        26.3         0.457     B
+1d Symmetrical Triangle (break ↑)      LONG  121         9.9         0.431     B
 1d          Golden Cross (50/200)      LONG  157        25.5         0.378     A
 1d           Three White Soldiers      LONG   23         4.3         0.376     B
-1d         Bullish RSI Divergence      LONG  166        25.3         0.344     A
-1d   Ascending Triangle (break ↑)      LONG  108        38.0         0.337     B
-1d          52-Week High Breakout      LONG  570        28.4         0.308     B
-1d   Descending Channel (break ↑)      LONG  100        39.0         0.275     A
-1d                      Bull Flag      LONG  315        14.3         0.254     A
-1d   Ascending Triangle (break ↓)     SHORT  132        22.0         0.224     B
-1d         MACD Zero-Line Cross ↑      LONG 1002        24.4         0.223     B
-1d                   Bull Pennant      LONG   64        21.9         0.205     B
-1d       Inverse Head & Shoulders      LONG  116        30.2         0.196     B
-1d    Ascending Channel (break ↑)      LONG   44        43.2         0.193     B
-1d               Bullish Marubozu      LONG  450        36.9         0.193     B
+1d         Bullish RSI Divergence      LONG  166        25.9         0.370     A
+1d   Ascending Triangle (break ↑)      LONG  109        37.6         0.355     B
+1d          52-Week High Breakout      LONG  570        28.4         0.310     B
+1d   Descending Channel (break ↑)      LONG  103        39.8         0.279     A
+1d                      Bull Flag      LONG  316        14.2         0.264     A
+1d                   Bull Pennant      LONG   63        22.2         0.224     B
+1d         MACD Zero-Line Cross ↑      LONG 1002        24.4         0.222     B
+1d   Ascending Triangle (break ↓)     SHORT  136        22.1         0.208     B
+1d               Bullish Marubozu      LONG  449        37.0         0.196     B
+1d                Three Inside Up      LONG  308        26.3         0.195     B
+1d              Bullish Belt Hold      LONG  767        38.5         0.187     B
